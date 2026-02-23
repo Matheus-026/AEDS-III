@@ -10,7 +10,7 @@ public class Livro{
 	private float preco;
 	private LocalDate dataPublicacao;
 	private String generos;
-	
+
 	public Livro() {}
 	
 	public Livro(String titulo, String resumo, float preco, 
@@ -22,13 +22,26 @@ public class Livro{
 		this.generos = generos;
 	}
 	
-	public void setId(int id) {
-		this.id = id;
-	}
-	
-	public int getId() {
-		return id;
-	}
+	// Métodos GETS e SETS do livro
+	public void setId(int id) { this.id = id; }
+	public int getId() { return id; }
+
+	public void setTitulo(String titulo) { this.titulo = titulo; }
+	public String getTitulo() { return titulo; }
+
+	public void setResumo(String resumo) { this.resumo = resumo; }
+	public String getResumo() { return resumo; }
+
+	public void setPreco(float preco) { this.preco = preco; }
+	public float getPreco() { return preco; }
+
+	public void setDataPublicacao(LocalDate dataPublicacao) { this.dataPublicacao = dataPublicacao; }
+	public LocalDate getDataPublicacao() { return dataPublicacao;}
+
+	public void setGeneros(String generos) { this.generos = generos; }
+	public String getGeneros() { return generos; }
+
+
 	
 	public byte[] toByteArray() throws IOException {
 
