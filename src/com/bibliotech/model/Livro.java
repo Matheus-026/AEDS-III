@@ -44,4 +44,16 @@ public class Livro{
 
         return ba.toByteArray();
     }
+
+	public void fromByteArray(byte[] ba) throws IOException{ // Ele interpreta os bytes e preenche os campos do objeto
+        ByteArrayInputStream bais = new ByteArrayInputStream(ba);
+        DataInputStream dis = new DataInputStream(bais);
+
+        this.id = dis.readInt();
+        this.titulo = dis.readUTF();
+        this.resumo = dis.readUTF();
+        this.preco = dis.readFloat();
+        this.dataPublicacao = LocalDate.parse(dis.readUTF());
+        this.generos = dis.readUTF();
+    }
 }
