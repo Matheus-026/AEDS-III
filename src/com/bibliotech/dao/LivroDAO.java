@@ -37,7 +37,7 @@ public class LivroDAO{
 		
 		byte[] dados = livro.toByteArray();
 		
-		arquivo.writeBoolean(true); // lapide ativa
+		arquivo.writeBoolean(false); // lapide ativa
 		arquivo.writeInt(dados.length);
 		arquivo.write(dados);
 		
@@ -46,4 +46,24 @@ public class LivroDAO{
 		
 	}
 	
+	public Livro read(int id) throws IOException {
+		arquivo.seek(8);
+		while (arquivo.getFilePointer() < arquivo.length()) {
+			boolean lapide = arquivo.readBoolean();
+			int tamanho = arquivo.readInt();
+
+			byte[] dados = new byte[tamanho];
+			arquivo.readFully(dados);
+
+			if(!lapide){
+				Livro livro = new Livro();
+				livro.fromByteArray(dados);
+
+				if(livro.getId() == id) {
+					return livro;
+				}
+			}
+		}
+		return null;
+	}
 }
