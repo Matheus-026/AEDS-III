@@ -2,7 +2,6 @@ package com.bibliotech.dao;
 import com.bibliotech.model.Livro;
 
 import java.io.*;
-import java.time.LocalDate;
 public class LivroDAO{
 	
 	private RandomAccessFile arquivo;
@@ -48,33 +47,25 @@ public class LivroDAO{
 	}
 
 	public Livro read(int id) throws IOException {
-		arquivo.seek(8); // Pula o cabeçalho
+		arquivo.seek(8); // Pula o cabeçalho (2 inteiros = 8 bytes)
 
 		while (arquivo.getFilePointer() < arquivo.length()) {
+
 			boolean ativo = arquivo.readBoolean();
 			int tamanho = arquivo.readInt();
 
 			if (ativo) {
-				long posicaoAntesId = arquivo.getFilePointer();
-				int idAtual = arquivo.readInt();
+				byte[] dados = new byte[tamanho];
+				arquivo.readFully(dados);
 
-				if (idAtual == id) {
-					// Encontramos! Agora lemos o restante dos campos
-					Livro l = new Livro();
-					l.setId(idAtual);
-					l.setTitulo(arquivo.readUTF());
-					l.setResumo(arquivo.readUTF());
-					l.setPreco(arquivo.readFloat());
-					l.setDataPublicacao(LocalDate.parse(arquivo.readUTF()));
-					l.setGeneros(arquivo.readUTF());
-					return l;
-				} else {
-					// Não é este ID, pula o resto deste registro específico
-					// (tamanho total - 4 bytes do ID já lido)
-					arquivo.skipBytes(tamanho - 4);
+				Livro livro = new Livro();
+				livro.fromByteArray(dados);
+
+				if (livro.getId() == id) {
+					return livro;
 				}
 			} else {
-				// Registro deletado, pula o corpo dele inteirinho
+				// Registro excluído logicamente
 				arquivo.skipBytes(tamanho);
 			}
 		}

@@ -16,9 +16,19 @@ public class Main {
         LivroDAO dao = new LivroDAO();
          
         System.out.println("--- 1. TESTE: CREATE ---");
-        Livro l1 = new Livro("Dom Casmurro", "Ciúmes e Bentinho.", 120.50f, LocalDate.of(1899, 1, 1), "Realismo");
+        Livro l1 = new Livro("Dom Casmurro", "Ciúmes e Bentinho.", 120.50f,
+                    LocalDate.of(1899, 1, 1),
+                    new String[]{"Realismo", "Romance Psicológico", "Clássico"});
         int id1 = dao.create(l1);
         System.out.println("Livro 1 criado com ID: " + id1);
+
+        Livro livroTeste = dao.read(id1);
+
+        System.out.println("Generos:");
+        for(String g : livroTeste.getGeneros()){
+            System.out.println(g);
+        }
+
         System.out.println();
 
         System.out.println("--- 2. TESTE: UPDATE (Alteração no local) ---");
@@ -51,7 +61,9 @@ public class Main {
         }
 
         System.out.println("\n--- 5. TESTE: REUTILIZAÇÃO DO ARQUIVO ---");
-        Livro l2 = new Livro("A Moreninha", "Romance romântico.", 45.00f, LocalDate.of(1844, 1, 1), "Romantismo");
+        Livro l2 = new Livro("A Moreninha","Romance romântico.", 45.00f,
+                    LocalDate.of(1844, 1, 1),
+                    new String[]{"Romantismo"});
         int id2 = dao.create(l2);
         System.out.println("Novo livro criado com ID: " + id2);
         imprimirLivro(dao.read(id2));
