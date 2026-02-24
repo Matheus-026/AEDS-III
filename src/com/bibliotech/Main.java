@@ -1,32 +1,67 @@
 package com.bibliotech;
 
 import java.io.IOException;
+import java.io.File;
 import java.time.LocalDate;
 import com.bibliotech.dao.LivroDAO;
 import com.bibliotech.model.Livro;
 
-public class Main{
-	public static void main(String[]args) throws IOException {
-		 LivroDAO dao = new LivroDAO();
-		 
-		 Livro livro = new Livro("Dom Casmurro", "Narrativa em primeira pessoa sobre memoria e ciume.", 120.50f, LocalDate.of(1899, 1, 1), "romance realista, realismo psicológico, romance impressionista");
-		 
-		 int id = dao.create(livro);
-		 
-		 System.out.println("Livro criado com ID: "+ id);
-		 
-		 Livro livro2 = new Livro(
-				    "Memorias Postumas de Bras Cubas",
-				    "Romance narrado por um defunto autor que revisita sua vida com ironia e critica social, explorando temas como vaidade, ambicao e hipocrisia da sociedade do seculo XIX.",
-				    98.90f,
-				    LocalDate.of(1881, 1, 1),
-				    "romance realista, critica social, literatura brasileira"
-				);
+public class Main {
+    public static void main(String[] args) throws IOException {
+        
+        // Reset do arquivo para teste limpo
+        File f = new File("livros.dat");
+        if(f.exists()) f.delete();
 
-				int id2 = dao.create(livro2);
+        LivroDAO dao = new LivroDAO();
+         
+        System.out.println("--- 1. TESTE: CREATE ---");
+        Livro l1 = new Livro("Dom Casmurro", "Ciúmes e Bentinho.", 120.50f, LocalDate.of(1899, 1, 1), "Realismo");
+        int id1 = dao.create(l1);
+        System.out.println("Livro 1 criado com ID: " + id1);
+        System.out.println();
 
-				System.out.println("Livro criado com ID: " + id2);
-	}
-	
-	
+        System.out.println("--- 2. TESTE: UPDATE (Alteração no local) ---");
+        // Vamos alterar o título para algo de tamanho similar ou menor
+        l1.setTitulo("Casmurro"); 
+        l1.setPreco(110.00f);
+        if(dao.update(l1)) {
+            System.out.println("Update 1 concluído. Verificando dados:");
+            imprimirLivro(dao.read(id1));
+        }
+
+        System.out.println("\n--- 3. TESTE: UPDATE (Movendo para o fim do arquivo) ---");
+        // Título muito maior: forçará a criação de um novo registro no fim do arquivo
+        l1.setTitulo("Dom Casmurro - Edição Especial de Luxo Comentada por Especialistas");
+        if(dao.update(l1)) {
+            System.out.println("Update 2 (registro maior) concluído. Verificando dados:");
+            imprimirLivro(dao.read(id1));
+        }
+
+        System.out.println("\n--- 4. TESTE: DELETE ---");
+        if(dao.delete(id1)) {
+            System.out.println("Registro " + id1 + " excluído logicamente.");
+        }
+        
+        Livro tentativaLeitura = dao.read(id1);
+        if(tentativaLeitura == null) {
+            System.out.println("Sucesso: O sistema ignorou o registro excluído (Lápide funcionou).");
+        } else {
+            System.out.println("Erro: O sistema ainda está lendo o registro deletado!");
+        }
+
+        System.out.println("\n--- 5. TESTE: REUTILIZAÇÃO DO ARQUIVO ---");
+        Livro l2 = new Livro("A Moreninha", "Romance romântico.", 45.00f, LocalDate.of(1844, 1, 1), "Romantismo");
+        int id2 = dao.create(l2);
+        System.out.println("Novo livro criado com ID: " + id2);
+        imprimirLivro(dao.read(id2));
+    }
+
+    public static void imprimirLivro(Livro l) {
+        if(l == null) {
+            System.out.println("Livro inexistente.");
+            return;
+        }
+        System.out.println("ID: " + l.getId() + " | Título: " + l.getTitulo() + " | Preço: R$" + l.getPreco());
+    }
 }
