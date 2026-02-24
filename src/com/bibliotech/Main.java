@@ -74,6 +74,18 @@ public class Main {
             System.out.println("Livro inexistente.");
             return;
         }
-        System.out.println("ID: " + l.getId() + " | Título: " + l.getTitulo() + " | Preço: R$" + l.getPreco());
+        
+        System.out.print("ID: " + l.getId());
+        System.out.print(" | Título: " + l.getTitulo());
+        System.out.print(" | Preço: R$" + l.getPreco());
+        System.out.print(" | Gêneros: ");
+    
+        if(l.getGeneros() != null) {
+            for(String g : l.getGeneros()) {
+                System.out.print(g + " ");
+            }
+        }
+    
+        System.out.println();
     }
 }

@@ -55,14 +55,20 @@ public class LivroDAO{
 			int tamanho = arquivo.readInt();
 
 			if (ativo) {
-				byte[] dados = new byte[tamanho];
-				arquivo.readFully(dados);
+				long posicaoAntesId = arquivo.getFilePointer();
+				int idAtual = arquivo.readInt();
 
-				Livro livro = new Livro();
-				livro.fromByteArray(dados);
-
-				if (livro.getId() == id) {
-					return livro;
+				if (idAtual == id) {
+					byte[] dados = new byte[tamanho];
+					arquivo.seek(posicaoAntesId); 
+					arquivo.readFully(dados);
+				
+					Livro l = new Livro();
+					l.fromByteArray(dados);
+					return l;
+				} else {
+					// Não é este ID, pula o resto deste registro específico
+					arquivo.skipBytes(tamanho - 4);
 				}
 			} else {
 				// Registro excluído logicamente
