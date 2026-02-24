@@ -9,12 +9,12 @@ public class Livro{
 	private String resumo;
 	private float preco;
 	private LocalDate dataPublicacao;
-	private String generos;
+	private String[] generos;
 
 	public Livro() {}
 	
 	public Livro(String titulo, String resumo, float preco, 
-            LocalDate dataPublicacao, String generos) {
+            LocalDate dataPublicacao, String[] generos) {
 		this.titulo = titulo;
 		this.resumo = resumo;
 		this.preco = preco;
@@ -38,8 +38,8 @@ public class Livro{
 	public void setDataPublicacao(LocalDate dataPublicacao) { this.dataPublicacao = dataPublicacao; }
 	public LocalDate getDataPublicacao() { return dataPublicacao;}
 
-	public void setGeneros(String generos) { this.generos = generos; }
-	public String getGeneros() { return generos; }
+	public void setGeneros(String[] generos) { this.generos = generos; }
+	public String[] getGeneros() { return generos; }
 
 
 	
@@ -53,8 +53,11 @@ public class Livro{
         dos.writeUTF(resumo);
         dos.writeFloat(preco);
         dos.writeUTF(dataPublicacao.toString());
-        dos.writeUTF(generos);
 
+		dos.writeInt(generos.length);  // quantidade de gêneros
+		for(String genero : generos){
+			dos.writeUTF(genero);
+		}
         return ba.toByteArray();
     }
 
@@ -67,6 +70,12 @@ public class Livro{
         this.resumo = dis.readUTF();
         this.preco = dis.readFloat();
         this.dataPublicacao = LocalDate.parse(dis.readUTF());
-        this.generos = dis.readUTF();
+
+		int qntGeneros = dis.readInt();
+		this.generos = new String[qntGeneros];
+
+		for(int i = 0; i <qntGeneros; i++){
+			generos[i] = dis.readUTF();		
+		}
     }
 }
