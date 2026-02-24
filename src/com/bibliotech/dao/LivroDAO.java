@@ -59,15 +59,13 @@ public class LivroDAO{
 				int idAtual = arquivo.readInt();
 
 				if (idAtual == id) {
-					// Encontramos! Agora lemos o restante dos campos
-					Livro l = new Livro();
-					l.setId(idAtual);
-					l.setTitulo(arquivo.readUTF());
-					l.setResumo(arquivo.readUTF());
-					l.setPreco(arquivo.readFloat());
-					l.setDataPublicacao(LocalDate.parse(arquivo.readUTF()));
-					l.setGeneros(arquivo.readUTF());
-					return l;
+					byte[] dados = new byte[tamanho];
+				    arquivo.seek(posicaoAntesId); 
+				    arquivo.readFully(dados);
+				
+				    Livro l = new Livro();
+				    l.fromByteArray(dados);
+				    return l;
 				} else {
 					// Não é este ID, pula o resto deste registro específico
 					// (tamanho total - 4 bytes do ID já lido)
