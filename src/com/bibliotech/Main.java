@@ -1,91 +1,146 @@
 package com.bibliotech;
 
 import java.io.IOException;
-import java.io.File;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Scanner;
+
 import com.bibliotech.dao.LivroDAO;
 import com.bibliotech.model.Livro;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        
-        // Reset do arquivo para teste limpo
-        File f = new File("livros.dat");
-        if(f.exists()) f.delete();
 
+        Scanner sc = new Scanner(System.in);
         LivroDAO dao = new LivroDAO();
-         
-        System.out.println("--- 1. TESTE: CREATE ---");
-        Livro l1 = new Livro("Dom Casmurro", "Ciúmes e Bentinho.", 120.50f,
-                    LocalDate.of(1899, 1, 1),
-                    new String[]{"Realismo", "Romance Psicológico", "Clássico"});
-        int id1 = dao.create(l1);
-        System.out.println("Livro 1 criado com ID: " + id1);
+        int opcao;
 
-        Livro livroTeste = dao.read(id1);
+        do {
+            System.out.println("\n1 - Criar");
+            System.out.println("2 - Buscar por ID");
+            System.out.println("3 - Atualizar");
+            System.out.println("4 - Deletar");
+            System.out.println("5 - Listar");
+            System.out.println("0 - Sair");
 
-        System.out.println("Generos:");
-        for(String g : livroTeste.getGeneros()){
-            System.out.println(g);
-        }
+            opcao = sc.nextInt();
+            sc.nextLine();
 
-        System.out.println();
+            switch (opcao) {
+                case 1:
+                    System.out.println("Criar livro");
+                    System.out.print("Título: ");
+                    String titulo = sc.nextLine();
 
-        System.out.println("--- 2. TESTE: UPDATE (Alteração no local) ---");
-        // Vamos alterar o título para algo de tamanho similar ou menor
-        l1.setTitulo("Casmurro"); 
-        l1.setPreco(110.00f);
-        if(dao.update(l1)) {
-            System.out.println("Update 1 concluído. Verificando dados:");
-            imprimirLivro(dao.read(id1));
-        }
+                    System.out.print("Resumo: ");
+                    String resumo = sc.nextLine();
 
-        System.out.println("\n--- 3. TESTE: UPDATE (Movendo para o fim do arquivo) ---");
-        // Título muito maior: forçará a criação de um novo registro no fim do arquivo
-        l1.setTitulo("Dom Casmurro - Edição Especial de Luxo Comentada por Especialistas");
-        if(dao.update(l1)) {
-            System.out.println("Update 2 (registro maior) concluído. Verificando dados:");
-            imprimirLivro(dao.read(id1));
-        }
+                    System.out.print("Preço: ");
+                    float preco = sc.nextFloat();
+                    sc.nextLine();
 
-        System.out.println("\n--- 4. TESTE: DELETE ---");
-        if(dao.delete(id1)) {
-            System.out.println("Registro " + id1 + " excluído logicamente.");
-        }
-        
-        Livro tentativaLeitura = dao.read(id1);
-        if(tentativaLeitura == null) {
-            System.out.println("Sucesso: O sistema ignorou o registro excluído (Lápide funcionou).");
-        } else {
-            System.out.println("Erro: O sistema ainda está lendo o registro deletado!");
-        }
+                    System.out.print("Data de Publicação (dd/MM/yyyy): ");
+                    LocalDate data = null;
+                    try{
+                        String dataStr = sc.nextLine();
+                        data = LocalDate.parse(dataStr, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                    }catch(Exception e){
+                        System.out.println("Formato inválido.");
+                    }
 
-        System.out.println("\n--- 5. TESTE: REUTILIZAÇÃO DO ARQUIVO ---");
-        Livro l2 = new Livro("A Moreninha","Romance romântico.", 45.00f,
-                    LocalDate.of(1844, 1, 1),
-                    new String[]{"Romantismo"});
-        int id2 = dao.create(l2);
-        System.out.println("Novo livro criado com ID: " + id2);
-        imprimirLivro(dao.read(id2));
+                    System.out.print("Gêneros: ");
+                    String[] generos = sc.nextLine().split(",");
+
+                    Livro novo = new Livro(titulo, resumo, preco, data, generos);
+                    int id = dao.create(novo);
+
+                    System.out.println("Livro criado com ID: " + id);
+                    break;
+
+                case 2:
+                    System.out.println("Buscar livro");
+                    System.out.print("ID: ");
+                    int idBusca = sc.nextInt();
+                    sc.nextLine();
+
+                    Livro encontraLivro = dao.read(idBusca);
+                    imprimirLivro(encontraLivro);
+                    break;
+
+                case 3:
+                    System.out.println("Atualizar livro");
+                    System.out.print("ID: ");
+                    int idAtualiza = sc.nextInt();
+                    sc.nextLine();
+
+                    Livro atualizaLivro = dao.read(idAtualiza);
+                    if (atualizaLivro == null) {
+                        System.out.println("Livro não encontrado.");
+                        break;
+                    }
+                    imprimirLivro(atualizaLivro);
+
+                    System.out.print("Novo título: ");
+                    atualizaLivro.setTitulo(sc.nextLine());
+
+                    System.out.print("Novo resumo: ");
+                    atualizaLivro.setResumo(sc.nextLine());
+
+                    System.out.print("Novo preço: ");
+                    atualizaLivro.setPreco(sc.nextFloat());
+                    sc.nextLine();
+
+                    System.out.print("Nova data (dd/MM/yyyy): ");
+                    atualizaLivro.setDataPublicacao(LocalDate.parse(sc.nextLine()));
+
+                    System.out.print("Novos gêneros: ");
+                    atualizaLivro.setGeneros(sc.nextLine().split(","));
+
+                    if (dao.update(atualizaLivro)) {
+                        System.out.println("Livro atualizado.");
+                    } else {
+                        System.out.println("Erro ao atualizar.");
+                    }
+                    break;
+
+                case 4:
+                    System.out.println("Deletar livro");
+                    System.out.print("ID para deletar: ");
+                    int idDeleta = sc.nextInt();
+                    sc.nextLine();
+
+                    if (dao.delete(idDeleta)) {
+                        System.out.println("Livro deletado.");
+                    } else {
+                        System.out.println("Livro não encontrado.");
+                    }
+                    break;
+
+                case 5:
+                    dao.listar();
+                    break;
+            }
+        } while (opcao != 0);
+        sc.close();
     }
 
     public static void imprimirLivro(Livro l) {
-        if(l == null) {
+        if (l == null) {
             System.out.println("Livro inexistente.");
             return;
         }
-        
         System.out.print("ID: " + l.getId());
         System.out.print(" | Título: " + l.getTitulo());
+        System.out.print(" | Resumo: " + l.getResumo());
         System.out.print(" | Preço: R$" + l.getPreco());
+        System.out.print(" | Data: " + l.getDataPublicacao());
         System.out.print(" | Gêneros: ");
-    
-        if(l.getGeneros() != null) {
-            for(String g : l.getGeneros()) {
+
+        if (l.getGeneros() != null) {
+            for (String g : l.getGeneros()) {
                 System.out.print(g + " ");
             }
         }
-    
         System.out.println();
     }
 }

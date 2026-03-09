@@ -16,7 +16,6 @@ public class LivroDAO{
 			arquivo.writeInt(0); //UltimoId
 			arquivo.writeInt(0); // quantidadeRegistros
 		}
-		
 	}
 	
 	public int create(Livro livro) throws IOException {
@@ -135,4 +134,24 @@ public class LivroDAO{
 		}
 		return false;
 	}
+
+	public void listar() throws IOException{
+		arquivo.seek(8);
+
+		while(arquivo.getFilePointer() < arquivo.length()){
+			boolean ativo = arquivo.readBoolean();
+			int tamanho = arquivo.readInt();
+
+			if(ativo){
+				byte[] dados = new byte[tamanho];
+				arquivo.readFully(dados);
+				Livro l = new Livro();
+				l.fromByteArray(dados);
+				com.bibliotech.Main.imprimirLivro(l);
+			}else{
+				arquivo.skipBytes(tamanho);
+			}
+		}
+	}
+
 }

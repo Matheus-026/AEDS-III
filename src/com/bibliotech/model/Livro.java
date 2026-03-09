@@ -65,16 +65,16 @@ public class Livro{
         ByteArrayInputStream bais = new ByteArrayInputStream(ba);
         DataInputStream dis = new DataInputStream(bais);
 
-        this.id = dis.readInt();
-        this.titulo = dis.readUTF();
-        this.resumo = dis.readUTF();
-        this.preco = dis.readFloat();
-        this.dataPublicacao = LocalDate.parse(dis.readUTF());
+        id = dis.readInt();
+        titulo = dis.readUTF();
+        resumo = dis.readUTF();
+        preco = dis.readFloat();
+        dataPublicacao = LocalDate.parse(dis.readUTF());
 
 		int qntGeneros = dis.readInt();
-		this.generos = new String[qntGeneros];
+		generos = new String[qntGeneros];
 
-		for(int i = 0; i <qntGeneros; i++){
+		for(int i = 0; i < qntGeneros; i++){
 			generos[i] = dis.readUTF();		
 		}
     }
