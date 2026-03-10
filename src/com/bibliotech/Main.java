@@ -11,7 +11,8 @@ import com.bibliotech.model.Livro;
 public class Main {
     public static void main(String[] args) throws IOException {
 
-        Scanner sc = new Scanner(System.in);
+    	Scanner sc = new Scanner(System.in);
+    	sc.useLocale(java.util.Locale.US);
         LivroDAO dao = new LivroDAO();
         int opcao;
 
@@ -74,27 +75,75 @@ public class Main {
                     sc.nextLine();
 
                     Livro atualizaLivro = dao.read(idAtualiza);
+
                     if (atualizaLivro == null) {
                         System.out.println("Livro não encontrado.");
                         break;
                     }
+
                     imprimirLivro(atualizaLivro);
 
-                    System.out.print("Novo título: ");
-                    atualizaLivro.setTitulo(sc.nextLine());
+                    System.out.println("\nO que deseja editar?");
+                    System.out.println("1 - Título");
+                    System.out.println("2 - Resumo");
+                    System.out.println("3 - Preço");
+                    System.out.println("4 - Data");
+                    System.out.println("5 - Gêneros");
+                    System.out.println("6 - Tudo");
 
-                    System.out.print("Novo resumo: ");
-                    atualizaLivro.setResumo(sc.nextLine());
-
-                    System.out.print("Novo preço: ");
-                    atualizaLivro.setPreco(sc.nextFloat());
+                    int escolha = sc.nextInt();
                     sc.nextLine();
 
-                    System.out.print("Nova data (dd/MM/yyyy): ");
-                    atualizaLivro.setDataPublicacao(LocalDate.parse(sc.nextLine()));
+                    switch(escolha){
 
-                    System.out.print("Novos gêneros: ");
-                    atualizaLivro.setGeneros(sc.nextLine().split(","));
+                        case 1:
+                            System.out.print("Novo título: ");
+                            atualizaLivro.setTitulo(sc.nextLine());
+                            break;
+
+                        case 2:
+                            System.out.print("Novo resumo: ");
+                            atualizaLivro.setResumo(sc.nextLine());
+                            break;
+
+                        case 3:
+                            System.out.print("Novo preço: ");
+                            atualizaLivro.setPreco(sc.nextFloat());
+                            sc.nextLine();
+                            break;
+
+                        case 4:
+                            System.out.print("Nova data (dd/MM/yyyy): ");
+                            atualizaLivro.setDataPublicacao(
+                                LocalDate.parse(sc.nextLine(), DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                            );
+                            break;
+
+                        case 5:
+                            System.out.print("Novos gêneros: ");
+                            atualizaLivro.setGeneros(sc.nextLine().split(","));
+                            break;
+
+                        case 6:
+                            System.out.print("Novo título: ");
+                            atualizaLivro.setTitulo(sc.nextLine());
+
+                            System.out.print("Novo resumo: ");
+                            atualizaLivro.setResumo(sc.nextLine());
+
+                            System.out.print("Novo preço: ");
+                            atualizaLivro.setPreco(sc.nextFloat());
+                            sc.nextLine();
+
+                            System.out.print("Nova data (dd/MM/yyyy): ");
+                            atualizaLivro.setDataPublicacao(
+                                LocalDate.parse(sc.nextLine(), DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                            );
+
+                            System.out.print("Novos gêneros: ");
+                            atualizaLivro.setGeneros(sc.nextLine().split(","));
+                            break;
+                    }
 
                     if (dao.update(atualizaLivro)) {
                         System.out.println("Livro atualizado.");

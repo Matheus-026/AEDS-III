@@ -46,35 +46,28 @@ public class LivroDAO{
 	}
 
 	public Livro read(int id) throws IOException {
-		arquivo.seek(8); // Pula o cabeçalho (2 inteiros = 8 bytes)
 
-		while (arquivo.getFilePointer() < arquivo.length()) {
+	    arquivo.seek(8);
 
-			boolean ativo = arquivo.readBoolean();
-			int tamanho = arquivo.readInt();
+	    while (arquivo.getFilePointer() < arquivo.length()) {
 
-			if (ativo) {
-				long posicaoAntesId = arquivo.getFilePointer();
-				int idAtual = arquivo.readInt();
+	        boolean ativo = arquivo.readBoolean();
+	        int tamanho = arquivo.readInt();
 
-				if (idAtual == id) {
-					byte[] dados = new byte[tamanho];
-					arquivo.seek(posicaoAntesId); 
-					arquivo.readFully(dados);
-				
-					Livro l = new Livro();
-					l.fromByteArray(dados);
-					return l;
-				} else {
-					// Não é este ID, pula o resto deste registro específico
-					arquivo.skipBytes(tamanho - 4);
-				}
-			} else {
-				// Registro excluído logicamente
-				arquivo.skipBytes(tamanho);
-			}
-		}
-		return null; // Não encontrado
+	        byte[] dados = new byte[tamanho];
+	        arquivo.readFully(dados);
+
+	        if (ativo) {
+	            Livro l = new Livro();
+	            l.fromByteArray(dados);
+
+	            if (l.getId() == id) {
+	                return l;
+	            }
+	        }
+	    }
+
+	    return null;
 	}
 
 	public boolean delete(int id) throws IOException {
