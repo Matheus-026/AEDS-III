@@ -1,0 +1,13 @@
+# Ignorar a pasta do banco de dados binário
+dados/
+
+# Ignorar arquivos compilados do Java (.class)
+bin/
+target/
+*.class
+
+# Ignorar configurações específicas das IDEs (VS Code, Eclipse, etc)
+.vscode/
+.settings/
+.classpath
+.project
