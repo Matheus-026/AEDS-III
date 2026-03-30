@@ -84,6 +84,27 @@ public class UsuarioDAO {
         return usuarios;
     }
 
+    // Método para listar os usuários diretamente no terminal (Fase 1)
+    public void listar() throws IOException {
+        System.out.println("\n--- LISTA DE USUÁRIOS NO ARQUIVO BINÁRIO ---");
+        
+        // Reutilizamos o listAll para pegar todos os registros ativos
+        List<Usuario> usuarios = this.listAll();
+        
+        if (usuarios.isEmpty()) {
+            System.out.println("Nenhum usuário cadastrado.");
+        } else {
+            for (Usuario u : usuarios) {
+                System.out.println("ID: " + u.getId() + 
+                                   " | Nome: " + u.getNome() + 
+                                   " | Email: " + u.getEmail() + 
+                                   " | Tipo: " + u.getTipo() + 
+                                   " | Senha(XOR): " + u.getSenha());
+            }
+        }
+        System.out.println("-------------------------------------------\n");
+    }
+
     public boolean delete(int id) throws IOException {
 		arquivo.seek(8); // Pula o cabeçalho (2 ints)
 		
