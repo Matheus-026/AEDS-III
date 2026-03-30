@@ -1,7 +1,6 @@
 package com.bibliotech.model;
 
 import java.io.*;
-import java.time.LocalDate;
 
 public class Usuario {
     private int id;
@@ -10,14 +9,21 @@ public class Usuario {
     private String senha;
     private String tipo; // User ou Adm
 
-    // Contrutores
+    // Contrutor vazio
     public Usuario() {}
 
-    public Usuario(String nome, String email, String senha, String tipo){
+    // Método auxiliar para criar o Administrador inicial do sistema
+    public static Usuario criarAdminPadrao() {
+        return new Usuario("Administrador", "admin@bibliotech.com", "admin@#$", "Adm");
+    }
+
+    // Contrutor com os parâmetros completos
+    // Construtor padrão (O JS enviará os dados para este)
+    public Usuario(String nome, String email, String senha, String tipo) {
         this.nome = nome;
         this.email = email;
         this.senha = senha;
-        this.tipo = tipo;
+        this.tipo = (tipo == null || tipo.isEmpty()) ? "Standard" : tipo;
     }
 
     // Métodos GETS e SETS 
