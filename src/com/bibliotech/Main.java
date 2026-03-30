@@ -3,19 +3,68 @@ package com.bibliotech;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Scanner;
 
 import com.bibliotech.dao.LivroDAO;
+import com.bibliotech.dao.UsuarioDAO;
 import com.bibliotech.model.Livro;
+import com.bibliotech.model.Usuario;
 
 public class Main {
-    public static void main(String[] args) throws IOException {
-
-    	Scanner sc = new Scanner(System.in);
-    	sc.useLocale(java.util.Locale.US);
-        LivroDAO dao = new LivroDAO();
+    private static void menuUsuarios(Scanner sc, UsuarioDAO dao) throws IOException {
         int opcao;
+        do {
+            System.out.println("\n--- GESTÃO DE USUÁRIOS ---");
+            System.out.println("1 - Criar Usuário (Standard)");
+            System.out.println("2 - Listar Todos (Front-end Simulation)");
+            System.out.println("3 - Deletar Usuário");
+            System.out.println("0 - Voltar");
+            System.out.print("Opção: ");
+            opcao = sc.nextInt();
+            sc.nextLine();
 
+            switch (opcao) {
+                case 1:
+                    System.out.print("Nome: ");
+                    String nome = sc.nextLine();
+                    System.out.print("Email: ");
+                    String email = sc.nextLine();
+                    System.out.print("Senha: ");
+                    String senha = sc.nextLine();
+                    
+                    // Como combinado, novos cadastros padrão são "Standard"
+                    Usuario novo = new Usuario(nome, email, senha, "Standard");
+                    int id = dao.create(novo);
+                    System.out.println("Usuário criado com ID: " + id);
+                    break;
+
+                case 2:
+                    dao.listar();
+                    break;
+
+                case 3:
+                    System.out.print("ID para deletar: ");
+                    int idDel = sc.nextInt();
+                    if (dao.delete(idDel)) System.out.println("Usuário removido.");
+                    else System.out.println("Não encontrado.");
+                    break;
+
+                case 0:
+                    System.out.println("Retornando ao menu principal...");
+                    break;
+                    
+                default:
+                    System.out.println("Opção inválida.");
+                    break;
+            }
+        } while (opcao != 0);
+    }
+
+
+
+    private static void menuLivros(Scanner sc, LivroDAO dao) throws IOException {
+        int opcao = 0;
         do {
             System.out.println("\n1 - Criar");
             System.out.println("2 - Buscar por ID");
@@ -191,5 +240,38 @@ public class Main {
             }
         }
         System.out.println();
+    }
+
+    public static void main(String[] args) throws IOException {
+
+    	Scanner sc = new Scanner(System.in);
+    	sc.useLocale(java.util.Locale.US);
+
+        // Instancia os dois DAOs
+        LivroDAO livroDao = new LivroDAO();
+        UsuarioDAO usuarioDao = new UsuarioDAO(); 
+        // No momento que UsuarioDAO é instanciado, se o arquivo for novo, 
+        // o Admin padrão já é criado!
+
+        int menuPrincipal;
+
+        do {
+            System.out.println("\n--- BIBLIOTECH ---");
+            System.out.println("1 - Menu de Livros");
+            System.out.println("2 - Menu de Usuários");
+            System.out.println("0 - Sair");
+            System.out.print("Escolha: ");
+            menuPrincipal = sc.nextInt();
+            sc.nextLine();
+
+            if (menuPrincipal == 1) {
+                menuLivros(sc, livroDao);
+            } else if (menuPrincipal == 2) {
+                menuUsuarios(sc, usuarioDao);
+            }
+
+        } while (menuPrincipal != 0);
+        
+        sc.close();
     }
 }
