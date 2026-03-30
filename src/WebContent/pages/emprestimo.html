@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Empréstimos - BiblioTech</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/emprestimo.css">
+    <script src="../js/emprestimo.js"></script>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header class="navbar">
+        <div class="logo">
+            <img src="../images/logoCoruja.png">
+        </div>
+
+        <nav>
+            <a href="#">Página Inicial</a>
+            <a href="#">Livros</a>
+            <a href="#">Autores</a>
+            <a href="#">Usuários</a>
+            <a href="emprestimo.html">Empréstimos</a>
+            <a href="#">Pesquisa Avançada</a>
+        </nav>
+
+        <div class="nav-icons">
+            <img src="../images/Notificacao.png" class="iconNotificacao">
+            <img src="../images/Perfil.png" class="iconPerfil">
+        </div>
+    </header>
+
+    <!-- CONTEÚDO -->
+    <section class="container">
+
+        <div class="top-bar">
+            <h1>Gestão de Empréstimos</h1>
+            <button class="add-btn" onclick="abrirModal()">+ Registrar Empréstimo</button>
+        </div>
+
+        <!-- TABELA -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Usuário</th>
+                    <th>Livro</th>
+                    <th>Data Empréstimo</th>
+                    <th>Data Devolução</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td>Julia Almeida</td>
+                    <td>Estrutura de Dados</td>
+                    <td>20/04/2026</td>
+                    <td>21/04/2026</td>
+                    <td class="status atrasado">Atrasado</td>
+                    <td class="acoes">
+                        <button class="acao-btn" onclick="toggleMenu(this)">⋮</button>
+
+                        <div class="menu-acoes">
+                            <div class="item" onclick="editar()">
+                                <span class="icon editar">✏️</span>
+                                Editar
+                            </div>
+
+                            <div class="item" onclick="devolver()">
+                                <span class="icon devolver">➤</span>
+                                Registrar Devolução
+                            </div>
+
+                            <div class="item" onclick="detalhes()">
+                                <span class="icon detalhes">ℹ️</span>
+                                Detalhes
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Ana Souza</td>
+                    <td>Dom Casmurro</td>
+                    <td>15/04/2026</td>
+                    <td>25/04/2026</td>
+                    <td class="status aberto">Em aberto</td>
+                    <td class="acoes">
+                        <button class="acao-btn" onclick="toggleMenu(this)">⋮</button>
+
+                        <div class="menu-acoes">
+                            <div class="item" onclick="editar()">
+                                <span class="icon editar">✏️</span>
+                                Editar
+                            </div>
+
+                            <div class="item" onclick="devolver()">
+                                <span class="icon devolver">➤</span>
+                                Registrar Devolução
+                            </div>
+
+                            <div class="item" onclick="detalhes()">
+                                <span class="icon detalhes">ℹ️</span>
+                                Detalhes
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </section>
+
+    <!-- MODAL -->
+    <div class="modal" id="modal">
+
+        <div class="modal-content">
+
+            <span class="close" onclick="fecharModal()">&times;</span>
+
+            <h2>Registrar Empréstimo</h2>
+
+            <form id="formEmprestimo">
+
+                <label>Usuário</label>
+                <input type="text" placeholder="Selecione o usuário">
+
+                <label>Livro</label>
+                <input type="text" placeholder="Selecione o livro">
+
+                <label>Data de Empréstimo</label>
+                <input type="date">
+
+                <label>Data de Devolução</label>
+                <input type="date">
+
+                <div class="modal-actions">
+                    <button type="button" onclick="fecharModal()">Cancelar</button>
+                    <button type="submit">Adicionar</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    <script src="js/emprestimo.js"></script>
+</body>
+
+</html>
