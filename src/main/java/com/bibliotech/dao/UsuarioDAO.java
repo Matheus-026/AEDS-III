@@ -11,7 +11,7 @@ public class UsuarioDAO {
 
     public UsuarioDAO() throws IOException{
 
-        arquivo = new RandomAccessFile("usuarios.dat", "rw");
+        arquivo = new RandomAccessFile("data/usuarios.dat", "rw");
 
         // Se não possuir metadados, cabeçalho vazio
         if(arquivo.length() == 0){
@@ -164,5 +164,27 @@ public class UsuarioDAO {
 			arquivo.skipBytes(tamanhoAntigo - 4);
 		}
 		return false;
+	}
+	
+	public Usuario read(int id) throws IOException {
+	    arquivo.seek(8);
+
+	    while (arquivo.getFilePointer() < arquivo.length()) {
+	        boolean ativo = arquivo.readBoolean();
+	        int tamanho = arquivo.readInt();
+
+	        byte[] dados = new byte[tamanho];
+	        arquivo.readFully(dados);
+
+	        if (ativo) {
+	            Usuario u = new Usuario();
+	            u.fromByteArray(dados);
+
+	            if (u.getId() == id) {
+	                return u;
+	            }
+	        }
+	    }
+	    return null;
 	}
 }
