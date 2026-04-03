@@ -10,16 +10,18 @@ public class Livro{
 	private float preco;
 	private LocalDate dataPublicacao;
 	private String[] generos;
+	private int idAutor;
 
 	public Livro() {}
 	
 	public Livro(String titulo, String resumo, float preco, 
-            LocalDate dataPublicacao, String[] generos) {
+            LocalDate dataPublicacao, String[] generos, int idAutor) {
 		this.titulo = titulo;
 		this.resumo = resumo;
 		this.preco = preco;
 		this.dataPublicacao = dataPublicacao;
 		this.generos = generos;
+		this.idAutor = idAutor;
 	}
 	
 	// Métodos GETS e SETS do livro
@@ -40,6 +42,9 @@ public class Livro{
 
 	public void setGeneros(String[] generos) { this.generos = generos; }
 	public String[] getGeneros() { return generos; }
+	
+	public int getIdAutor() { return idAutor; }
+	public void setIdAutor(int idAutor) { this.idAutor = idAutor; }
 
 
 	
@@ -53,6 +58,7 @@ public class Livro{
         dos.writeUTF(resumo);
         dos.writeFloat(preco);
         dos.writeUTF(dataPublicacao.toString());
+        dos.writeInt(idAutor);
 
 		dos.writeInt(generos.length);  // quantidade de gêneros
 		for(String genero : generos){
@@ -70,6 +76,8 @@ public class Livro{
         resumo = dis.readUTF();
         preco = dis.readFloat();
         dataPublicacao = LocalDate.parse(dis.readUTF());
+        
+        idAutor = dis.readInt();
 
 		int qntGeneros = dis.readInt();
 		generos = new String[qntGeneros];
@@ -77,5 +85,7 @@ public class Livro{
 		for(int i = 0; i < qntGeneros; i++){
 			generos[i] = dis.readUTF();		
 		}
+		
+		
     }
 }
