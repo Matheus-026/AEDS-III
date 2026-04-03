@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesquisa Avançada - Bibliotech</title>
+    <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style_standard.css">
+    <link rel="stylesheet" href="../css/style_pesquisa.css">
+
+</head>
+<body>
+    <header class="navbar">
+	        <div class="logo">
+	            <img src="../images/logoCoruja.png">
+	        </div>
+	
+	        <nav>
+	            <a href="#">Página Inicial</a>
+	            <a href="#">Livros</a>
+	            <a href="#">Autores</a>
+	            <a href="#">Usuários</a>
+	            <a href="emprestimo.html">Empréstimos</a>
+	            <a href="#">Pesquisa Avançada</a>
+	        </nav>
+	
+	        <div class="nav-icons">
+	            <img src="../images/Notificacao.png" class="iconNotificacao">
+	            <img src="../images/Perfil.png" class="iconPerfil">
+	        </div>
+	    </header>
+        <section class="container">
+            <div class="top-bar">
+                <h1>Pesquisa Avançada</h1>
+            </div>
+        </section>
+        
+        <form class="pesquisa-form">
+            <div class="form-grid">
+        
+                <div class="form-bloco">
+                    <h3>Livros</h3>
+                    <div class="campos-linha">
+                        <div class="input-group">
+                            <label>Título</label>
+                            <input type="text" name="titulo" placeholder="Ex: O Senhor dos Anéis">
+                        </div>
+                        <div class="input-group">
+                            <label>Gênero</label>
+                            <input type="text" name="genero">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Preço: <span id="valorPrecoAtual">R$ 100</span></label>
+                        <div class="preco-range">
+                            <span>R$ 20</span>
+                            <input type="range" name="preco" min="20" max="200" value="100">
+                            <span>R$ 200</span>
+                        </div>
+                    </div>
+                </div>
+        
+                <div class="form-bloco">
+                    <h3>Autores</h3>
+                    <div class="campos-linha">
+                        <div class="input-group">
+                            <label>Nome do Autor</label>
+                            <input type="text" name="nomeAutor" placeholder="Ex: Machado de Assis">
+                        </div>
+                        <div class="input-group">
+                            <label>Telefone</label>
+                            <input type="tel" name="telefoneAutor" placeholder="(31) 99999-9999">
+                        </div>
+                    </div>
+                </div>
+        
+                <div class="form-bloco">
+                    <h3>Usuários</h3>
+                    <div class="campos-linha">
+                        <div class="input-group">
+                            <label>Nome</label>
+                            <input type="text" name="nomeUsuario">
+                        </div>
+                        <div class="input-group">
+                            <label>E-mail</label>
+                            <input type="email" name="emailUsuario">
+                        </div>
+                    </div>
+                    <div class="campos-linha">
+                        <div class="input-group">
+                            <label>Status</label>
+                            <select name="statusUsuario">
+                                <option value="">Qualquer</option>
+                                <option value="ativo">Ativo</option>
+                                <option value="bloqueado">Bloqueado</option>
+                            </select>
+                        </div>
+                        <div class="input-group"></div>
+                    </div>
+                </div>
+        
+                <div class="form-bloco">
+                    <h3>Empréstimos</h3>
+                    <div class="campos-linha">
+                        <div class="input-group">
+                            <label>Livro Emprestado</label>
+                            <input type="text" name="livroEmprestado" placeholder="Título do livro">
+                        </div>
+                        <div class="input-group">
+                            <label>Nome do Usuário</label>
+                            <input type="text" name="usuarioEmprestimo" placeholder="Quem pegou o livro?">
+                        </div>
+                    </div>
+                    <div class="campos-linha">
+                        <div class="input-group">
+                            <label>Data Inicial</label>
+                            <input type="date" name="dataInicial">
+                        </div>
+                        <div class="input-group">
+                            <label>Data Final</label>
+                            <input type="date" name="dataFinal">
+                        </div>
+                    </div>
+                </div>
+        
+            </div>
+        
+            <div class="form-acoes">
+                <button type="button" class="btn-limpar">Limpar Filtros</button>
+                <div class="botoes-direita">
+                    <button type="button" class="btn-cancelar">Cancelar</button>
+                    <button type="submit" class="btn-buscar">Buscar</button>
+                </div>
+            </div>
+        </form>
+        <script src="../js/pesquisa_avancada.js"></script>
+</body>
+</html>

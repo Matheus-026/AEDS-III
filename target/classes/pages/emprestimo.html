@@ -1,0 +1,101 @@
+	<!DOCTYPE html>
+	<html lang="pt-br">
+	
+	<head>
+	    <meta charset="UTF-8">
+	    <title>Empréstimos - BiblioTech</title>
+	
+	    <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;600;700&display=swap" rel="stylesheet">
+	    <link rel="stylesheet" href="../css/emprestimo.css">
+	</head>
+	
+	<body>
+	
+	    <!-- HEADER -->
+	    <header class="navbar">
+	        <div class="logo">
+	            <img src="../images/logoCoruja.png">
+	        </div>
+	
+	        <nav>
+	            <a href="#">Página Inicial</a>
+	            <a href="#">Livros</a>
+	            <a href="#">Autores</a>
+	            <a href="#">Usuários</a>
+	            <a href="emprestimo.html">Empréstimos</a>
+	            <a href="#">Pesquisa Avançada</a>
+	        </nav>
+	
+	        <div class="nav-icons">
+	            <img src="../images/Notificacao.png" class="iconNotificacao">
+	            <img src="../images/Perfil.png" class="iconPerfil">
+	        </div>
+	    </header>
+	
+	    <!-- CONTEÚDO -->
+	    <section class="container">
+	
+	        <div class="top-bar">
+	            <h1>Gestão de Empréstimos</h1>
+	            <button class="add-btn" onclick="abrirModal()">+ Registrar Empréstimo</button>
+	        </div>
+	
+	        <!-- TABELA — tbody preenchido dinamicamente pelo JS -->
+	        <table>
+	            <thead>
+	                <tr>
+	                    <th>Usuário</th>
+	                    <th>Livro</th>
+	                    <th>Data Empréstimo</th>
+	                    <th>Data Devolução</th>
+	                    <th>Status</th>
+	                    <th>Ações</th>
+	                </tr>
+	            </thead>
+	            <tbody>
+	                <!-- Linhas inseridas por renderizarTabela() -->
+	            </tbody>
+	        </table>
+	
+	    </section>
+	
+	    <!-- MODAL -->
+	    <div class="modal" id="modal">
+	        <div class="modal-content">
+	
+	            <span class="close" onclick="fecharModal()">&times;</span>
+	
+	            <!-- Título muda entre "Registrar" e "Editar" -->
+	            <h2 id="modal-titulo">Registrar Empréstimo</h2>
+	
+	            <form id="formEmprestimo">
+	
+	                <label>ID do Usuário</label>
+	                <input id="input-usuario" type="number" min="1" placeholder="Digite o ID do usuário" required>
+	
+	                <label>ID do Livro</label>
+	                <input id="input-livro" type="number" min="1" placeholder="Digite o ID do livro" required>
+	
+	                <label>Data de Empréstimo</label>
+	                <input id="input-data-emp" type="date" required>
+	
+	                <label>Data de Devolução</label>
+	                <input id="input-data-dev" type="date" required>
+	
+	                <div class="modal-actions">
+	                    <button type="button" onclick="fecharModal()">Cancelar</button>
+	                    <!-- Texto muda entre "Adicionar" e "Salvar" -->
+	                    <button type="submit" id="btn-submit">Adicionar</button>
+	                </div>
+	
+	            </form>
+	        </div>
+	    </div>
+	
+	    <!-- Toast de feedback (sucesso / erro) -->
+	    <div id="toast" class="toast" style="display:none;"></div>
+	
+	    <script src="../js/emprestimo.js"></script>
+	</body>
+	
+	</html>
