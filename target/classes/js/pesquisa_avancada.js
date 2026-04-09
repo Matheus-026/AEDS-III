@@ -1,5 +1,3 @@
-
-
 // ─── Navbar hide on scroll ────────────────────────────────────────────────────
 const navbar = document.querySelector('.navbar');
 let ultimoScroll = 0;
@@ -14,53 +12,91 @@ window.addEventListener('scroll', () => {
     ultimoScroll = scrollAtual;
 });
 
+
+// ─── DOM carregado ───────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Seleciona os elementos da página
+
     const formPesquisa = document.querySelector('.pesquisa-form');
     const btnLimpar = document.querySelector('.btn-limpar');
     const btnCancelar = document.querySelector('.btn-cancelar');
     const inputPreco = document.querySelector('input[type="range"]');
     const displayPreco = document.getElementById('valorPrecoAtual');
+    const divResultados = document.getElementById("resultados");
 
-    // 2. Faz a bolinha do preço funcionar em tempo real
-    inputPreco.addEventListener('input', function() {
-        displayPreco.textContent = `R$ ${this.value}`;
-    });
+    // ─── Slider de preço ─────────────────────────────────────────────────────
+    if (inputPreco && displayPreco) {
+        inputPreco.addEventListener('input', function() {
+            displayPreco.textContent = `R$ ${this.value}`;
+        });
+    }
 
-    // 3. Botão de Limpar os filtros
-    btnLimpar.addEventListener('click', function() {
-        formPesquisa.reset(); // Zera todos os inputs
-        displayPreco.textContent = `R$ ${inputPreco.value}`; // Volta o texto do preço para o padrão (100)
-    });
+    // ─── Botão limpar ────────────────────────────────────────────────────────
+    if (btnLimpar) {
+        btnLimpar.addEventListener('click', function() {
+            formPesquisa.reset();
 
-    // 4. Botão Cancelar (Apenas recarrega a página ou redireciona)
-    btnCancelar.addEventListener('click', function() {
-        window.location.reload(); 
-    });
+            if (inputPreco && displayPreco) {
+                displayPreco.textContent = `R$ ${inputPreco.value}`;
+            }
 
-    // 5. Captura os dados ao clicar em BUSCAR
+            divResultados.innerHTML = "";
+        });
+    }
+
+    // ─── Botão cancelar ──────────────────────────────────────────────────────
+    if (btnCancelar) {
+        btnCancelar.addEventListener('click', function() {
+            window.location.reload();
+        });
+    }
+
+    // ─── SUBMIT (BUSCA REAL) ─────────────────────────────────────────────────
     formPesquisa.addEventListener('submit', function(event) {
-        event.preventDefault(); // Impede a página de recarregar
+        event.preventDefault();
 
-        // Coleta todos os dados que têm o atributo "name"
         const formData = new FormData(formPesquisa);
-        const dadosParaEnviar = Object.fromEntries(formData.entries());
+        const dados = Object.fromEntries(formData.entries());
 
-        // Mostra no console do navegador o que será enviado (Aperte F12 para ver)
-        console.log("JSON pronto para enviar:", dadosParaEnviar);
+        console.log("Dados enviados:", dados);
 
-        // Quando sua API estiver pronta, o código de envio será parecido com este:
-        /*
-        fetch('http://localhost:8080/api/pesquisa', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(dadosParaEnviar)
-        })
-        .then(response => response.json())
-        .then(data => console.log('Sucesso:', data))
-        .catch(error => console.error('Erro:', error));
-        */
+        // Monta URL para o backend
+        const url = `http://localhost:8080/livros/busca?` +
+            `titulo=${encodeURIComponent(dados.titulo || "")}&` +
+            `genero=${encodeURIComponent(dados.genero || "")}&` +
+            `min=-1&` +
+            `max=${Number(dados.preco) || -1}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+
+                console.log("Resposta do backend:", data);
+
+                if (!data || data.length === 0) {
+                    divResultados.innerHTML = "<p>Nenhum resultado encontrado</p>";
+                    return;
+                }
+
+                let html = "";
+
+                data.forEach(livro => {
+                    const generos = livro.generos ? livro.generos.join(", ") : "Sem gênero";
+
+                    html += `
+                        <div class="resultado-item">
+                            <strong>${livro.titulo}</strong><br>
+                            Preço: R$ ${livro.preco}<br>
+                            Gêneros: ${generos}
+                        </div>
+                    <hr>
+                 `;
+                });
+
+                divResultados.innerHTML = html;
+            })
+            .catch(error => {
+                console.error("Erro na busca:", error);
+                divResultados.innerHTML = "<p>Erro ao buscar livros</p>";
+            });
     });
 });
