@@ -17,6 +17,86 @@ body::before {
 }
 
 
+/* garante alinhamento com o container da página */
+.container {
+    display: flex;
+    flex-direction: column;
+}
+
+/* filtros com mesma largura da tabela */
+.filtros {
+    width: 100%;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+
+    margin-top: 20px;
+    margin-bottom: 10px;
+
+    padding: 15px;
+
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* input ocupa mais espaço */
+.filtros input {
+    flex: 1;
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+}
+
+/* selects alinhados */
+.filtros select {
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+}
+
+/* tabela alinhada com filtros */
+table {
+    margin-top: 0; /* remove espaço extra */
+}
+
+.filtros {
+    margin-bottom: 0;
+}
+
+.generos-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.genero-tag {
+    background: var(--orange);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.genero-tag span {
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.generos-container input {
+    border: none;
+    outline: none;
+    flex: 1;
+    min-width: 120px;
+}
+
+
 /* ─── Container do autocomplete ───────────────────────────────────────────── */
 .autocomplete-container {
     position: relative;
