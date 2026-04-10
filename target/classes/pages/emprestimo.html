@@ -6,7 +6,10 @@
 	    <title>Empréstimos - BiblioTech</title>
 	
 	    <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;600;700&display=swap" rel="stylesheet">
-	    <link rel="stylesheet" href="../css/emprestimo.css">
+		<link rel="stylesheet" href="../css/style_standard.css">
+		<link rel="stylesheet" href="../css/emprestimo.css">
+		
+	    
 	</head>
 	
 	<body>
@@ -18,12 +21,12 @@
 	        </div>
 	
 	        <nav>
-	            <a href="#">Página Inicial</a>
-	            <a href="#">Livros</a>
-	            <a href="#">Autores</a>
-	            <a href="#">Usuários</a>
+	            <a href="page_adm.html">Página Inicial</a>
+	            <a href="livro.html">Livros</a>
+	            <a href="autor.html">Autores</a>
+	            <a href="usuario.html">Usuários</a>
 	            <a href="emprestimo.html">Empréstimos</a>
-	            <a href="#">Pesquisa Avançada</a>
+	            <a href="pesquisa_avancada.html">Pesquisa Avançada</a>
 	        </nav>
 	
 	        <div class="nav-icons">
@@ -36,8 +39,8 @@
 	    <section class="container">
 	
 	        <div class="top-bar">
-	            <h1>Gestão de Empréstimos</h1>
-	            <button class="add-btn" onclick="abrirModal()">+ Registrar Empréstimo</button>
+	            <h2>Gestão de Empréstimos</h2>
+	            <button class="btn btn-primary" onclick="abrirModal()">+ Registrar Empréstimo</button>
 	        </div>
 	
 	        <!-- TABELA — tbody preenchido dinamicamente pelo JS -->
@@ -66,15 +69,19 @@
 	            <span class="close" onclick="fecharModal()">&times;</span>
 	
 	            <!-- Título muda entre "Registrar" e "Editar" -->
-	            <h2 id="modal-titulo">Registrar Empréstimo</h2>
+	            <h4 id="modal-titulo">Registrar Empréstimo</h4>
 	
 	            <form id="formEmprestimo">
 	
 	                <label>ID do Usuário</label>
 	                <input id="input-usuario" type="number" min="1" placeholder="Digite o ID do usuário" required>
 	
-	                <label>ID do Livro</label>
-	                <input id="input-livro" type="number" min="1" placeholder="Digite o ID do livro" required>
+					<label>Livro</label>
+
+					<div class="autocomplete-container">
+					    <input id="input-livro-nome" type="text" placeholder="Digite o nome do livro" autocomplete="off" required>
+					    <div id="lista-livros" class="lista-sugestoes"></div>
+					</div>
 	
 	                <label>Data de Empréstimo</label>
 	                <input id="input-data-emp" type="date" required>
