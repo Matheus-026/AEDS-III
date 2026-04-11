@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Administrador</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../css/style_standard.css">
+    <link rel="stylesheet" href="../css/style_page_adm.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<!-- HEADER -->
+<header class="navbar">
+    <div class="logo">
+        <img src="../images/logoCoruja.png" alt="Logo">
+    </div>
+
+    <nav>
+        <a href="page_adm.html">Página Inicial</a>
+        <a href="livro.html">Livros</a>
+        <a href="autor.html">Autores</a>
+        <a href="#">Usuários</a>
+        <a href="emprestimo.html">Empréstimos</a>
+        <a href="#">Pesquisa Avançada</a>
+    </nav>
+
+    <div class="nav-icons">
+        <img src="../images/Notificacao.png" class="iconNotificacao" alt="Notificações">
+        <img src="../images/Perfil.png" class="iconPerfil" alt="Perfil">
+    </div>
+</header>
+
+<!-- CONTEÚDO -->
+<main class="container">
+
+    <!-- CARDS -->
+    <section class="section">
+
+        <div class="grid-fast-info">
+
+            <div class="box-fast-info">
+                <div class="icon-number">
+                    <span class="fa-solid fa-book"></span>
+                    <p id="number-books">300</p>
+                </div>
+                <div class="text-fast-info">
+                    <p>Total Livros</p>
+                </div>
+            </div>
+
+            <div class="box-fast-info">
+                <div class="icon-number">
+                    <span class="fa-solid fa-users"></span>
+                    <p id="number-users">100</p>
+                </div>
+                <div class="text-fast-info">
+                    <p>Usuários</p>
+                </div>
+            </div>
+
+            <div class="box-fast-info">
+                <div class="icon-number">
+                    <span class="fa-solid fa-recycle"></span>
+                    <p id="number-active-loans">20</p>
+                </div>
+                <div class="text-fast-info">
+                    <p>Empréstimos ativos</p>
+                </div>
+            </div>
+
+            <div class="box-fast-info">
+                <div class="icon-number">
+                    <span class="fa-solid fa-triangle-exclamation"></span>
+                    <p id="number-outstanding-loans">5</p>
+                </div>
+                <div class="text-fast-info">
+                    <p>Empréstimos pendentes</p>
+                </div>
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- LISTAS -->
+    <section class="section">
+
+        <div class="grid-info-list">
+
+            <!-- LIVROS RECENTES -->
+            <div class="box-info-list">
+                <h4>Livros recentes</h4>
+
+                <div class="table-box-info-list">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Livro</th>
+                            <th>Devolver até</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>Julia Almeida</td>
+                            <td>O Senhor dos Anéis</td>
+                            <td>10/04/2026</td>
+                        </tr>
+                        <tr>
+                            <td>Luiz Santana</td>
+                            <td>O Pequeno Príncipe</td>
+                            <td>08/04/2026</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p><a href="#">ver todos ></a></p>
+            </div>
+
+            <!-- EMPRÉSTIMOS RECENTES -->
+            <div class="box-info-list">
+                <h4>Empréstimos recentes</h4>
+
+                <div class="table-box-info-list">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Livro</th>
+                            <th>Data</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>Julia Almeida</td>
+                            <td>O Senhor dos Anéis</td>
+                            <td>10/04/2026</td>
+                        </tr>
+                        <tr>
+                            <td>Luiz Santana</td>
+                            <td>O Pequeno Príncipe</td>
+                            <td>08/04/2026</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p><a href="#">ver todos ></a></p>
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ALERTAS -->
+    <section class="section">
+
+        <div class="box-background">
+
+            <div class="title-boxs">
+                <h4>Alertas</h4>
+                <p><a href="#">Ver todos ></a></p>
+            </div>
+
+            <div class="box-alert">
+
+                <div class="alert">
+                    <div class="title-alert">
+                        <span class="fa-solid fa-book"></span>
+                        <p>5 livros estão atrasados</p>
+                    </div>
+
+                    <button class="btn btn-primary">Verificar</button>
+                </div>
+
+                <div class="alert">
+                    <div class="title-alert">
+                        <span class="fa-solid fa-users"></span>
+                        <p>3 usuários com multa pendente</p>
+                    </div>
+
+                    <button class="btn btn-primary">Verificar</button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+</body>
+</html>

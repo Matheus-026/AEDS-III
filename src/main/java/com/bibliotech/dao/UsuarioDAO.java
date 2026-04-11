@@ -187,4 +187,31 @@ public class UsuarioDAO {
 	    }
 	    return null;
 	}
+
+    // LOGIN
+    public Usuario login(String email, String senha) throws IOException {
+        arquivo.seek(8); // Pula o cabeçalho
+
+        while (arquivo.getFilePointer() < arquivo.length()) {
+            boolean ativo = arquivo.readBoolean();
+            int tamanho = arquivo.readInt();
+
+            byte[] dados = new byte[tamanho];
+            arquivo.readFully(dados);
+
+            if (ativo) {
+                Usuario u = new Usuario();
+                u.fromByteArray(dados);
+
+                // Aplica o XOR na senha digitada para comparar com a que está guardada
+                String senhaDigitadaCriptografada = aplicarXOR(senha);
+
+                // Verifica se o email e a senha (ambas criptografadas) coincidem
+                if (u.getEmail().equals(email) && u.getSenha().equals(senhaDigitadaCriptografada)) {
+                    return u; // Login válido! Retorna o utilizador.
+                }
+            }
+        }
+        return null; // Credenciais inválidas ou utilizador inativo
+    }
 }
