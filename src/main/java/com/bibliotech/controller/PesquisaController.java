@@ -19,14 +19,14 @@ public class PesquisaController {
         dao = new LivroDAO();
     }
 
-    @GetMapping("/busca")
-    public List<Livro> busca(
-            @RequestParam(name = "titulo", required = false) String titulo,
-            @RequestParam(name = "genero", required = false) String genero,
-            @RequestParam(name = "min", defaultValue = "-1") float precoMin,
-            @RequestParam(name = "max", defaultValue = "-1") float precoMax) 
-            throws IOException {
+    // @GetMapping("/busca")
+    // public List<Livro> busca(
+    //         @RequestParam(name = "titulo", required = false) String titulo,
+    //         @RequestParam(name = "genero", required = false) String genero,
+    //         @RequestParam(name = "min", defaultValue = "-1") float precoMin,
+    //         @RequestParam(name = "max", defaultValue = "-1") float precoMax) 
+    //         throws IOException {
 
-        return dao.buscaAvancada(titulo, genero, precoMin, precoMax);
-    }
+    //     return dao.buscaAvancada(titulo, genero, precoMin, precoMax);
+    // }
 }
