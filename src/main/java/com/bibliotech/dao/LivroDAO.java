@@ -3,6 +3,8 @@ package com.bibliotech.dao;
 import com.bibliotech.model.Livro;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LivroDAO {
 
@@ -181,5 +183,57 @@ public class LivroDAO {
                 System.out.println(l);
             }
         }
+    }
+    
+    // =========================
+    // PESQUISA AVANÇADA(FAVOR NÃO APAGAR NOVAMENTE, POIS FUDEU MINHA PARTE DO TRABALHO)
+    // =========================
+    public List<Livro> buscaAvancada(String titulo, String genero, float precoMin, float precoMax) throws IOException {
+
+        List<Livro> resultados = new ArrayList<>();
+        arquivo.seek(8);
+        while (arquivo.getFilePointer() < arquivo.length()) {
+            boolean ativo = arquivo.readBoolean();
+            int tamanho = arquivo.readInt();
+            if (ativo) {
+                byte[] dados = new byte[tamanho];
+                arquivo.readFully(dados);
+                Livro l = new Livro();
+                l.fromByteArray(dados);
+                boolean ok = true;
+                // Título
+                if (titulo != null && !titulo.isEmpty()) {
+                    if (!l.getTitulo().toLowerCase().contains(titulo.toLowerCase())) {
+                        ok = false;
+                    }
+                }
+                // Gênero
+                if (genero != null && !genero.isEmpty()) {
+                    boolean generoEncontrado = false;
+                    for (String g : l.getGeneros()) {
+                        if (g.toLowerCase().contains(genero.toLowerCase())) {
+                            generoEncontrado = true;
+                        }
+                    }
+                    if (!generoEncontrado) {
+                        ok = false;
+                    }
+                }
+                // Preço mínimo
+                if (precoMin >= 0 && l.getPreco() < precoMin) {
+                    ok = false;
+                }
+                // Preço máximo
+                if (precoMax >= 0 && l.getPreco() > precoMax) {
+                    ok = false;
+                }
+                if(ok){
+                    resultados.add(l);
+                }
+            }else{
+                arquivo.skipBytes(tamanho);
+            }
+        }
+        return resultados;
     }
 }
