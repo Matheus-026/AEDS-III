@@ -13,15 +13,15 @@ public class TesteHashAutor {
         System.out.println(" TESTE HASH EXTENSÍVEL - AUTORES ");
         System.out.println("=================================");
 
-        // 🔥 PASSO 0 - LIMPAR HASH (SEM APAGAR .dat)
-        limparArquivosHash();
+        // LIMPAR HASH (SEM APAGAR .dat)
+        //limparArquivosHash();
 
         AutorDAO dao = new AutorDAO();
 
-        // 🔥 PASSO 1 - reconstruir hash
-        dao.reconstruirHash();
+        // Reconstruir hash
+        //dao.reconstruirHash();
 
-        // 🔥 PASSO 2 - pegar último ID direto do arquivo
+        // Pegar último ID direto do arquivo
         RandomAccessFile arq = new RandomAccessFile("data/autores.dat", "r");
         arq.seek(0);
         int ultimoID = arq.readInt();
@@ -51,7 +51,7 @@ public class TesteHashAutor {
 
         System.out.println("\nÚltimo ID válido: " + ultimoValido);
 
-        // 🔥 PASSO 3 - testar leitura do último autor (via HASH)
+        // Testar leitura do último autor (via HASH)
         Autor ultimo = dao.read(ultimoValido);
 
         if (ultimo != null) {
@@ -61,7 +61,7 @@ public class TesteHashAutor {
             System.out.println("❌ ERRO: não encontrou o último autor");
         }
 
-        // 🔥 PASSO 4 - testar alguns anteriores
+        // Testar alguns anteriores
         System.out.println("\nTestando registros anteriores:");
 
         for (int i = 1; i <= Math.min(5, ultimoID); i++) {
@@ -73,13 +73,18 @@ public class TesteHashAutor {
                 System.out.println("ID " + i + ": NÃO ENCONTRADO");
             }
         }
+        
+        for (int i = 1; i <= 20; i++) {
+            Autor a = dao.read(i);
+            System.out.println(i + " -> " + (a != null ? "OK" : "NULL"));
+        }
 
         System.out.println("\n=================================");
         System.out.println(" TESTE FINALIZADO ");
         System.out.println("=================================");
     }
 
-    // 🔥 MÉTODO NOVO (ESSENCIAL)
+    //MÉTODO NOVO (ESSENCIAL)
     private static void limparArquivosHash() throws Exception {
 
         RandomAccessFile dir = new RandomAccessFile("data/diretorios/autores_dir.hash", "rw");

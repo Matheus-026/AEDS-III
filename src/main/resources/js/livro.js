@@ -12,7 +12,7 @@ const containerGeneros = document.getElementById("generos-container");
 let generosSelecionados = [];
 let autoresMap = {};
 
-// 🔥 AUTOCOMPLETE
+// AUTOCOMPLETE
 let autores = [];
 let autorSelecionadoId = null;
 
@@ -23,9 +23,9 @@ const listaAutores = document.getElementById("listaAutores");
 let modoEdicao = false;
 let idEditando = null;
 
-// =========================
-// GÊNEROS (MULTIVALORADO)
-// =========================
+
+// GÊNEROS
+
 if (inputGenero) {
     inputGenero.addEventListener("keydown", function (e) {
         if (e.key === "Enter") {
@@ -68,12 +68,11 @@ function removerGenero(index) {
     renderGeneros();
 }
 
-// =========================
 // MODAL
-// =========================
+
 function abrirModal() {
     modal.style.display = "flex";
-    carregarAutores(); // 🔥 autocomplete
+    carregarAutores();
 }
 
 function fecharModal() {
@@ -90,7 +89,6 @@ function fecharModal() {
     generosSelecionados = [];
     renderGeneros();
 
-    // limpar autor
     if (inputAutor) inputAutor.value = "";
     autorSelecionadoId = null;
 }
@@ -101,11 +99,12 @@ window.onclick = function(event) {
     }
 };
 
-// =========================
+
 // CARREGAR LIVROS
-// =========================
+
 async function carregarLivros() {
     await carregarAutoresMap();
+
     try {
         const response = await fetch(API_URL);
         const livros = await response.json();
@@ -121,9 +120,9 @@ async function carregarLivros() {
     }
 }
 
-// =========================
-// ADICIONAR NA TABELA
-// =========================
+
+// TABELA
+
 function adicionarNaTabela(livro) {
 
     const tr = document.createElement("tr");
@@ -138,13 +137,8 @@ function adicionarNaTabela(livro) {
             <button class="acao-btn" onclick="toggleMenu(this)">⋮</button>
 
             <div class="menu-acoes">
-                <div class="item" onclick="abrirEdicao(${livro.id})">
-                    Editar
-                </div>
-
-                <div class="item" onclick="excluirLivro(${livro.id})">
-                    Excluir
-                </div>
+                <div class="item" onclick="abrirEdicao(${livro.id})">Editar</div>
+                <div class="item" onclick="excluirLivro(${livro.id})">Excluir</div>
             </div>
         </td>
     `;
@@ -152,9 +146,9 @@ function adicionarNaTabela(livro) {
     tbody.appendChild(tr);
 }
 
-// =========================
-// ABRIR EDIÇÃO
-// =========================
+
+// EDITAR
+
 async function abrirEdicao(id) {
     try {
         const res = await fetch(`${API_URL}/${id}`);
@@ -173,7 +167,6 @@ async function abrirEdicao(id) {
         generosSelecionados = livro.generos || [];
         renderGeneros();
 
-        // 🔥 seta nome do autor no input
         if (inputAutor) {
             inputAutor.value = autoresMap[livro.idAutor] || "";
             autorSelecionadoId = livro.idAutor;
@@ -187,9 +180,9 @@ async function abrirEdicao(id) {
     }
 }
 
-// =========================
-// EXCLUIR LIVRO
-// =========================
+
+// EXCLUIR
+
 async function excluirLivro(id) {
     fecharMenus();
 
@@ -211,20 +204,30 @@ async function excluirLivro(id) {
     }
 }
 
-// =========================
+
 // SALVAR EDIÇÃO
-// =========================
+
 async function salvarEdicao(livro) {
     try {
-        const res = await fetch(`${API_URL}/${idEditando}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(livro)
-        });
+		const url = modoEdicao
+		    ? `${API_URL}/${idEditando}`
+		    : API_URL;
 
-        if (!res.ok) throw new Error();
+		const method = modoEdicao ? "PUT" : "POST";
+
+		const response = await fetch(url, {
+		    method: method,
+		    headers: {
+		        "Content-Type": "application/json"
+		    },
+		    body: JSON.stringify(livro)
+		});
+
+        if (!res.ok) {
+            const msg = await res.text();
+            alert("❌ " + msg);
+            return;
+        }
 
         alert("Livro atualizado!");
         carregarLivros();
@@ -236,9 +239,9 @@ async function salvarEdicao(livro) {
     }
 }
 
-// =========================
-// SUBMIT (CREATE + UPDATE)
-// =========================
+
+// CREATE + UPDATE
+
 form.addEventListener("submit", async function(e) {
     e.preventDefault();
 
@@ -248,7 +251,6 @@ form.addEventListener("submit", async function(e) {
 
     let idAutorFinal = autorSelecionadoId;
 
-    // 🔥 se não selecionou, cria autor
     if (!idAutorFinal) {
         const nomeDigitado = inputAutor.value.trim();
 
@@ -257,17 +259,11 @@ form.addEventListener("submit", async function(e) {
             return;
         }
 
-        try {
-            idAutorFinal = await criarAutor(nomeDigitado);
-			
-        } catch (error) {
-            alert("Erro ao criar autor");
-            return;
-        }
+        idAutorFinal = await criarAutor(nomeDigitado);
     }
 
     const livro = {
-        titulo: titulo,
+        titulo,
         resumo: "",
         preco: parseFloat(preco),
         dataPublicacao: data,
@@ -275,37 +271,40 @@ form.addEventListener("submit", async function(e) {
         idAutor: idAutorFinal
     };
 
-    if (modoEdicao) {
-        await salvarEdicao(livro);
-        modoEdicao = false;
-        idEditando = null;
-        return;
-    }
-
     try {
-        const response = await fetch(API_URL, {
-            method: "POST",
+
+        const url = modoEdicao
+            ? `${API_URL}/${idEditando}`
+            : API_URL;
+
+        const method = modoEdicao ? "PUT" : "POST";
+
+        const response = await fetch(url, {
+            method: method,
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify(livro)
         });
 
-        if (!response.ok) throw new Error();
+        if (!response.ok) {
+            const msg = await response.text();
+            alert("❌ " + msg);
+            return;
+        }
 
-        const result = await response.json();
+        if (modoEdicao) {
+            alert("Livro atualizado!");
+        } else {
+            const result = await response.json();
+            adicionarNaTabela({ ...livro, id: result.id });
+            alert("Livro salvo!");
+        }
 
-        adicionarNaTabela({
-            ...livro,
-            id: result.id
-        });
-
+        fecharModal();
         form.reset();
         generosSelecionados = [];
         renderGeneros();
-        fecharModal();
-
-        alert("Livro salvo!");
 
     } catch (error) {
         console.error(error);
@@ -313,18 +312,45 @@ form.addEventListener("submit", async function(e) {
     }
 });
 
-// =========================
-// AUTOCOMPLETE
-// =========================
+
+// AUTOR
 async function carregarAutores() {
     const res = await fetch(API_AUTORES);
     autores = await res.json();
 }
 
+async function carregarAutoresMap() {
+    const res = await fetch(API_AUTORES);
+    const lista = await res.json();
+
+    autoresMap = {};
+    lista.forEach(a => {
+        autoresMap[a.id] = a.nome;
+    });
+}
+
+async function criarAutor(nome) {
+    const res = await fetch(API_AUTORES, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ nome })
+    });
+
+    if (!res.ok) throw new Error();
+
+    const data = await res.json();
+    return data.id;
+}
+
+
+// AUTOCOMPLETE
+
 if (inputAutor) {
     inputAutor.addEventListener("input", function () {
-        const valor = this.value.toLowerCase();
 
+        const valor = this.value.toLowerCase();
         listaAutores.innerHTML = "";
 
         if (!valor) {
@@ -355,15 +381,9 @@ if (inputAutor) {
     });
 }
 
-document.addEventListener("click", (e) => {
-    if (!e.target.closest(".autocomplete-container")) {
-        if (listaAutores) listaAutores.style.display = "none";
-    }
-});
 
-// =========================
-// MENU (⋮)
-// =========================
+// HELPERS
+
 function toggleMenu(botao) {
     const menu = botao.nextElementSibling;
 
@@ -378,41 +398,126 @@ function fecharMenus() {
     document.querySelectorAll('.menu-acoes').forEach(m => m.style.display = 'none');
 }
 
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.acoes')) fecharMenus();
-});
-
-// =========================
-// FORMATAR DATA
-// =========================
 function formatarData(data) {
     return new Date(data).toLocaleDateString("pt-BR");
 }
 
-async function carregarAutoresMap() {
-    const res = await fetch(API_AUTORES);
-    const autores = await res.json();
 
-    autoresMap = {};
-    autores.forEach(a => {
-        autoresMap[a.id] = a.nome;
-    });
+// BUSCA HÍBRIDA
+
+let livrosCache = [];
+
+// normalizar texto (acentos)
+function normalizar(texto) {
+    return texto
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 }
 
-async function criarAutor(nome) {
-    const res = await fetch(API_AUTORES, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ nome })
-    });
+// sobrescreve carregarLivros pra guardar cache 
+const carregarLivrosOriginal = carregarLivros;
 
-    if (!res.ok) throw new Error();
+carregarLivros = async function() {
+    await carregarAutoresMap();
 
-    const data = await res.json();
-    return data.id;
+    try {
+        const response = await fetch(API_URL);
+        const livros = await response.json();
+
+        livrosCache = livros; 
+
+        tbody.innerHTML = "";
+
+        livros.forEach(livro => {
+            adicionarNaTabela(livro);
+        });
+
+    } catch (error) {
+        console.error("Erro ao carregar livros:", error);
+    }
+};
+
+const precoInput = document.getElementById("preco");
+
+precoInput.addEventListener("focus", () => {
+    if (precoInput.value === "0.00") {
+        precoInput.value = "";
+    }
+});
+
+precoInput.addEventListener("blur", () => {
+    let valor = Number(precoInput.value);
+
+    if (isNaN(valor) || precoInput.value.trim() === "") {
+        precoInput.value = "0.00";
+    } else {
+        precoInput.value = valor.toFixed(2);
+    }
+});
+
+
+// render tabela
+function renderTabela(livros) {
+    tbody.innerHTML = "";
+    livros.forEach(l => adicionarNaTabela(l));
 }
 
-// carregar ao abrir página
+// evento de busca
+document.getElementById("buscar").addEventListener("input", async (e) => {
+
+    const valor = e.target.value.trim();
+    const tipo = document.getElementById("tipoBusca").value;
+
+    // vazio → mostra tudo
+    if (valor === "") {
+        renderTabela(livrosCache);
+        return;
+    }
+
+    // QUALQUER CASO → se for número usa HASH (ID)
+    if (!isNaN(valor)) {
+        try {
+            const res = await fetch(`${API_URL}/${valor}`);
+
+            if (!res.ok) {
+                tbody.innerHTML = "<tr><td colspan='5'>Não encontrado</td></tr>";
+                return;
+            }
+
+            const livro = await res.json();
+            renderTabela([livro]);
+
+        } catch {
+            tbody.innerHTML = "<tr><td colspan='5'>Livro não encontrado</td></tr>";
+        }
+
+        return;
+    }
+
+    const termo = normalizar(valor);
+
+    
+    if (tipo === "titulo") {
+        const filtrados = livrosCache.filter(l =>
+            normalizar(l.titulo).includes(termo)
+        );
+
+        renderTabela(filtrados);
+        return;
+    }
+
+ 
+    if (tipo === "autor") {
+        const filtrados = livrosCache.filter(l => {
+            const nomeAutor = autoresMap[l.idAutor] || "";
+            return normalizar(nomeAutor).includes(termo);
+        });
+		
+
+        renderTabela(filtrados);
+        return;
+    }
+});
+
 window.onload = carregarLivros;
