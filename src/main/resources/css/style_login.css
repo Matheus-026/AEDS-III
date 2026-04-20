@@ -33,9 +33,9 @@ body.login-page .logo-section {
 }
 
 body.login-page .logo-img {
-    width: 500px !important; 
+    width: 400px !important; 
     height: auto !important;
-    transform: translateY(-200px);
+    transform: translateY(-80px);
 }
 
 body.login-page .form-section {
@@ -109,10 +109,14 @@ body.login-page .btn-primary {
     transition: 0.3s;
     font-weight: bold;
     width: auto;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 body.login-page .btn-primary:hover {
     background-color: #4b7164;
+	
 }
 
 body.login-page .link-rodape {
@@ -123,6 +127,7 @@ body.login-page .link-rodape {
     font-size: 1.1rem; 
     font-style: italic;
     border-bottom: 1px solid transparent;
+	text-decoration: underline;
 }
 
 body.login-page .link-rodape:hover {
