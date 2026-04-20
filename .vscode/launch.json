@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-BibliotechApplication<bibliotech>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.bibliotech.BibliotechApplication",
+            "projectName": "bibliotech",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

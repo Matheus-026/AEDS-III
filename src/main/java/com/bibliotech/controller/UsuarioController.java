@@ -2,29 +2,68 @@ package com.bibliotech.controller;
 
 import com.bibliotech.dao.UsuarioDAO;
 import com.bibliotech.model.Usuario;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/usuarios")
-@CrossOrigin
+@CrossOrigin(origins = "*") // Permite que o front-end chame esta API
 public class UsuarioController {
+
     private UsuarioDAO usuarioDAO;
 
-    public UsuarioController() throws IOException {
-        usuarioDAO = new UsuarioDAO();
+    public UsuarioController() {
+        try {
+            this.usuarioDAO = new UsuarioDAO();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    // 🔹 LISTAR TODOS
+    // ==========================================
+    // FLUXO DE AUTENTICAÇÃO 
+    // ==========================================
+
+    @PostMapping("/cadastrar")
+    public ResponseEntity<String> cadastrar(@RequestBody Usuario novoUsuario) {
+        try {
+            novoUsuario.setTipo("Standard"); 
+            int id = usuarioDAO.create(novoUsuario);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Usuário criado com o ID: " + id);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao criar usuário.");
+        }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<Usuario> login(@RequestBody LoginRequest request) {
+        try {
+            Usuario u = usuarioDAO.login(request.getEmail(), request.getSenha());
+            if (u != null) {
+                return ResponseEntity.ok(u);
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+
+    // ==========================================
+    // FLUXO ADMINISTRATIVO
+    // ==========================================
+
     @GetMapping
     public List<Usuario> listar() throws IOException {
-        // Retorna a lista de objetos diretamente, o Spring converte para JSON
         return usuarioDAO.listAll();
     }
 
-    // 🔹 BUSCAR POR ID
     @GetMapping("/{id}")
     public Usuario buscarPorId(@PathVariable int id) throws IOException {
         Usuario u = usuarioDAO.read(id);
@@ -34,10 +73,8 @@ public class UsuarioController {
         return u;
     }
 
-    // 🔹 CRIAR
     @PostMapping
     public Map<String, Object> criar(@RequestBody Map<String, String> dados) throws Exception {
-        // Extrai os campos do JSON enviado pelo Front-end
         String nome = dados.get("nome");
         String email = dados.get("email");
         String senha = dados.get("senha");
@@ -49,7 +86,6 @@ public class UsuarioController {
         return Map.of("id", novoId);
     }
 
-    // 🔹 ATUALIZAR
     @PutMapping("/{id}")
     public Map<String, Object> atualizar(
             @PathVariable int id,
@@ -60,7 +96,6 @@ public class UsuarioController {
             throw new Exception("Usuário não encontrado");
         }
 
-        // Atualiza apenas os campos permitidos
         if (dados.containsKey("nome")) existente.setNome(dados.get("nome"));
         if (dados.containsKey("email")) existente.setEmail(dados.get("email"));
         if (dados.containsKey("senha")) existente.setSenha(dados.get("senha"));
@@ -70,7 +105,6 @@ public class UsuarioController {
         return Map.of("ok", true);
     }
 
-    // 🔹 DELETE
     @DeleteMapping("/{id}")
     public Map<String, Object> deletar(@PathVariable int id) throws IOException {
         boolean ok = usuarioDAO.delete(id);
@@ -79,4 +113,15 @@ public class UsuarioController {
         }
         return Map.of("ok", true);
     }
+}
+
+// Classe auxiliar para receber os dados do JSON no momento do login
+class LoginRequest {
+    private String email;
+    private String senha;
+    
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getSenha() { return senha; }
+    public void setSenha(String senha) { this.senha = senha; }
 }
