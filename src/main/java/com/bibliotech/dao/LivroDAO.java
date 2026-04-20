@@ -9,20 +9,35 @@ import java.util.List;
 public class LivroDAO {
 
     private RandomAccessFile arquivo;
+    private HashExtensivel hash;
 
     public LivroDAO() throws IOException {
         arquivo = new RandomAccessFile("data/livros.dat", "rw");
 
-        // Se arquivo vazio, cria cabeçalho
         if (arquivo.length() == 0) {
             arquivo.writeInt(0); // último ID
-            arquivo.writeInt(0); // quantidade de registros
+            arquivo.writeInt(0); // quantidade
+        }
+
+        hash = new HashExtensivel("livros");
+
+        if (hashEstaVazio()) {
+            reconstruirHash();
         }
     }
 
-    // =========================
-    // CREATE
-    // =========================
+    // VERIFICAR HASH
+    private boolean hashEstaVazio() {
+
+        File dir = new File("data/diretorios/livros_dir.hash");
+        File bucket = new File("data/buckets/livros_bucket.hash");
+
+        return !dir.exists() || dir.length() <= 4 ||
+               !bucket.exists() || bucket.length() == 0;
+    }
+
+   
+    // CREATE (COM HASH)
     public int create(Livro livro) throws IOException {
 
         arquivo.seek(0);
@@ -34,13 +49,17 @@ public class LivroDAO {
 
         livro.setId(ultimoID);
 
-        arquivo.seek(arquivo.length());
+        long pos = arquivo.length();
+        arquivo.seek(pos);
 
         byte[] dados = livro.toByteArray();
 
-        arquivo.writeBoolean(true); // ativo
+        arquivo.writeBoolean(true);
         arquivo.writeInt(dados.length);
         arquivo.write(dados);
+
+        // 🔥 HASH
+        hash.inserir(livro.getId(), pos);
 
         // atualiza cabeçalho
         arquivo.seek(0);
@@ -50,122 +69,105 @@ public class LivroDAO {
         return livro.getId();
     }
 
-    // =========================
-    // READ
-    // =========================
+    // READ (HASH)
     public Livro read(int id) throws IOException {
 
-        arquivo.seek(8); // pula cabeçalho
+        long pos = hash.buscar(id);
 
-        while (arquivo.getFilePointer() < arquivo.length()) {
+        if (pos == -1)
+            return null;
 
-            boolean ativo = arquivo.readBoolean();
-            int tamanho = arquivo.readInt();
+        arquivo.seek(pos);
 
-            byte[] dados = new byte[tamanho];
-            arquivo.readFully(dados);
+        boolean ativo = arquivo.readBoolean();
+        int tamanho = arquivo.readInt();
 
-            if (ativo) {
-                Livro l = new Livro();
-                l.fromByteArray(dados);
+        if (!ativo)
+            return null;
 
-                // DEBUG (opcional)
-                // System.out.println("Lido ID: " + l.getId());
+        byte[] dados = new byte[tamanho];
+        arquivo.readFully(dados);
 
-                if (l.getId() == id) {
-                    return l;
-                }
-            }
-        }
+        Livro l = new Livro();
+        l.fromByteArray(dados);
 
-        return null;
+        return l;
     }
 
-    // =========================
-    // DELETE (lápide)
-    // =========================
+    // DELETE (COM HASH)
     public boolean delete(int id) throws IOException {
 
-        arquivo.seek(8);
+        long pos = hash.buscar(id);
 
-        while (arquivo.getFilePointer() < arquivo.length()) {
+        if (pos == -1)
+            return false;
 
-            long posRegistro = arquivo.getFilePointer();
+        arquivo.seek(pos);
 
-            boolean ativo = arquivo.readBoolean();
-            int tamanho = arquivo.readInt();
+        boolean ativo = arquivo.readBoolean();
 
-            byte[] dados = new byte[tamanho];
-            arquivo.readFully(dados);
+        if (!ativo)
+            return false;
 
-            if (ativo) {
-                Livro l = new Livro();
-                l.fromByteArray(dados);
+        // marca como removido
+        arquivo.seek(pos);
+        arquivo.writeBoolean(false);
 
-                if (l.getId() == id) {
-                    arquivo.seek(posRegistro);
-                    arquivo.writeBoolean(false); // marca como deletado
-                    return true;
-                }
-            }
-        }
+        // remove do hash
+        hash.remover(id);
 
-        return false;
+        return true;
     }
 
-    // =========================
-    // UPDATE
-    // =========================
+    // UPDATE (COM HASH)
     public boolean update(Livro novoLivro) throws IOException {
 
-        arquivo.seek(8);
+        long pos = hash.buscar(novoLivro.getId());
 
-        while (arquivo.getFilePointer() < arquivo.length()) {
+        if (pos == -1)
+            return false;
 
-            long posRegistro = arquivo.getFilePointer();
+        arquivo.seek(pos);
 
-            boolean ativo = arquivo.readBoolean();
-            int tamanhoAntigo = arquivo.readInt();
+        boolean ativo = arquivo.readBoolean();
+        int tamanhoAntigo = arquivo.readInt();
 
-            long posDados = arquivo.getFilePointer();
+        if (!ativo)
+            return false;
 
-            byte[] dados = new byte[tamanhoAntigo];
-            arquivo.readFully(dados);
+        byte[] novosDados = novoLivro.toByteArray();
 
-            Livro l = new Livro();
-            l.fromByteArray(dados);
+        // cabe no mesmo espaço → SOBRESCREVE
+        if (novosDados.length <= tamanhoAntigo) {
 
-            if (ativo && l.getId() == novoLivro.getId()) {
+            arquivo.seek(pos + 5); // boolean + int
+            arquivo.write(novosDados);
 
-                byte[] novosDados = novoLivro.toByteArray();
-
-                if (novosDados.length <= tamanhoAntigo) {
-                    // sobrescreve no mesmo espaço
-                    arquivo.seek(posDados);
-                    arquivo.write(novosDados);
-                } else {
-                    // marca antigo como inativo
-                    arquivo.seek(posRegistro);
-                    arquivo.writeBoolean(false);
-
-                    // escreve novo no final
-                    arquivo.seek(arquivo.length());
-                    arquivo.writeBoolean(true);
-                    arquivo.writeInt(novosDados.length);
-                    arquivo.write(novosDados);
-                }
-
-                return true;
-            }
+            return true;
         }
 
-        return false;
+        // não cabe → move
+        arquivo.seek(pos);
+        arquivo.writeBoolean(false);
+
+        long novaPos = arquivo.length();
+        arquivo.seek(novaPos);
+
+        arquivo.writeBoolean(true);
+        arquivo.writeInt(novosDados.length);
+        arquivo.write(novosDados);
+
+        hash.remover(novoLivro.getId());
+        hash.inserir(novoLivro.getId(), novaPos);
+
+        return true;
     }
 
-    // =========================
-    // LISTAR
-    // =========================
-    public void listar() throws IOException {
+
+    // LISTAR TODOS
+    public List<Livro> readAll() throws IOException {
+
+        List<Livro> lista = new ArrayList<>();
 
         arquivo.seek(8);
 
@@ -180,60 +182,133 @@ public class LivroDAO {
             if (ativo) {
                 Livro l = new Livro();
                 l.fromByteArray(dados);
-                System.out.println(l);
+                lista.add(l);
             }
         }
+
+        return lista;
     }
-    
-    // =========================
-    // PESQUISA AVANÇADA(FAVOR NÃO APAGAR NOVAMENTE, POIS FUDEU MINHA PARTE DO TRABALHO)
-    // =========================
+
+
+    // RELACIONAMENTO 1:N
+
+    public List<Livro> buscarPorAutor(int idAutor) throws IOException {
+
+        List<Livro> lista = new ArrayList<>();
+
+        arquivo.seek(8);
+
+        while (arquivo.getFilePointer() < arquivo.length()) {
+
+            boolean ativo = arquivo.readBoolean();
+            int tamanho = arquivo.readInt();
+
+            byte[] dados = new byte[tamanho];
+            arquivo.readFully(dados);
+
+            if (ativo) {
+                Livro l = new Livro();
+                l.fromByteArray(dados);
+
+                if (l.getIdAutor() == idAutor) {
+                    lista.add(l);
+                }
+            }
+        }
+
+        return lista;
+    }
+
+    // BUSCA AVANÇADA 
     public List<Livro> buscaAvancada(String titulo, String genero, float precoMin, float precoMax) throws IOException {
 
         List<Livro> resultados = new ArrayList<>();
         arquivo.seek(8);
+
         while (arquivo.getFilePointer() < arquivo.length()) {
+
             boolean ativo = arquivo.readBoolean();
             int tamanho = arquivo.readInt();
+
             if (ativo) {
                 byte[] dados = new byte[tamanho];
                 arquivo.readFully(dados);
+
                 Livro l = new Livro();
                 l.fromByteArray(dados);
+
                 boolean ok = true;
-                // Título
+
                 if (titulo != null && !titulo.isEmpty()) {
-                    if (!l.getTitulo().toLowerCase().contains(titulo.toLowerCase())) {
+                    if (!l.getTitulo().toLowerCase().contains(titulo.toLowerCase()))
                         ok = false;
-                    }
                 }
-                // Gênero
+
                 if (genero != null && !genero.isEmpty()) {
-                    boolean generoEncontrado = false;
+                    boolean generoOk = false;
+
                     for (String g : l.getGeneros()) {
                         if (g.toLowerCase().contains(genero.toLowerCase())) {
-                            generoEncontrado = true;
+                            generoOk = true;
+                            break;
                         }
                     }
-                    if (!generoEncontrado) {
-                        ok = false;
-                    }
+
+                    if (!generoOk) ok = false;
                 }
-                // Preço mínimo
-                if (precoMin >= 0 && l.getPreco() < precoMin) {
+
+                if (precoMin >= 0 && l.getPreco() < precoMin)
                     ok = false;
-                }
-                // Preço máximo
-                if (precoMax >= 0 && l.getPreco() > precoMax) {
+
+                if (precoMax >= 0 && l.getPreco() > precoMax)
                     ok = false;
-                }
-                if(ok){
-                    resultados.add(l);
-                }
-            }else{
+
+                if (ok) resultados.add(l);
+
+            } else {
                 arquivo.skipBytes(tamanho);
             }
         }
+
         return resultados;
+    }
+
+
+    // RECONSTRUIR HASH
+    public void reconstruirHash() throws IOException {
+
+        RandomAccessFile dir =
+                new RandomAccessFile("data/diretorios/livros_dir.hash", "rw");
+        dir.setLength(0);
+        dir.close();
+
+        RandomAccessFile bucket =
+                new RandomAccessFile("data/buckets/livros_bucket.hash", "rw");
+        bucket.setLength(0);
+        bucket.close();
+
+        hash = new HashExtensivel("livros");
+
+        arquivo.seek(8);
+
+        while (arquivo.getFilePointer() < arquivo.length()) {
+
+            long pos = arquivo.getFilePointer();
+
+            boolean ativo = arquivo.readBoolean();
+            int tamanho = arquivo.readInt();
+
+            byte[] dados = new byte[tamanho];
+            arquivo.readFully(dados);
+
+            if (ativo) {
+                Livro l = new Livro();
+                l.fromByteArray(dados);
+
+                hash.inserir(l.getId(), pos);
+            }
+        }
+
+        System.out.println("Hash de livros reconstruído!");
     }
 }

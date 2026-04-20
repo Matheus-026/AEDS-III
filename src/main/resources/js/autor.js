@@ -206,7 +206,7 @@ document.getElementById("buscar").addEventListener("input", async (e) => {
             renderTabela([a]);
 
         } catch {
-            tbody.innerHTML = "<tr><td colspan='4'>Erro na busca</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='4'>Autor não encontrado</td></tr>";
         }
 
         return;

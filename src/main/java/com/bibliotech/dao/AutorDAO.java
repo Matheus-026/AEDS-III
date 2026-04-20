@@ -17,7 +17,19 @@ public class AutorDAO {
         }
 
         hash = new HashExtensivel("autores");
-        reconstruirHash();
+        
+        if (hashEstaVazio()) {
+            reconstruirHash();
+        }
+    }
+    
+    private boolean hashEstaVazio() throws IOException {
+
+        File dir = new File("data/diretorios/autores_dir.hash");
+        File bucket = new File("data/buckets/autores_bucket.hash");
+
+        return !dir.exists() || dir.length() <= 4 ||
+               !bucket.exists() || bucket.length() == 0;
     }
 
     // =========================

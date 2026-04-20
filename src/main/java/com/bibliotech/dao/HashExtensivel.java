@@ -32,16 +32,13 @@ public class HashExtensivel {
         }
     }
 
-    // =========================
+
     // HASH
-    // =========================
     private int hash(int id) {
         return id & ((1 << profundidadeGlobal) - 1);
     }
 
-    // =========================
     // CRIAR BUCKET
-    // =========================
     private long criarBucket(int profundidadeLocal) throws IOException {
 
         long pos = buckets.length();
@@ -58,9 +55,8 @@ public class HashExtensivel {
         return pos;
     }
 
-    // =========================
+
     // INSERIR
-    // =========================
     public void inserir(int id, long posArquivo) throws IOException {
 
         int h = hash(id);
@@ -86,9 +82,7 @@ public class HashExtensivel {
         }
     }
 
-    // =========================
     // BUSCAR
-    // =========================
     public long buscar(int id) throws IOException {
 
         int h = hash(id);
@@ -109,9 +103,7 @@ public class HashExtensivel {
         return -1;
     }
 
-    // =========================
     // REMOVER
-    // =========================
     public void remover(int id) throws IOException {
 
         int h = hash(id);
@@ -149,9 +141,8 @@ public class HashExtensivel {
         }
     }
 
-    // =========================
+   
     // SPLIT
-    // =========================
     private void splitBucket(int hash, long posBucket, int pl) throws IOException {
 
         if (pl == profundidadeGlobal) {
@@ -184,9 +175,8 @@ public class HashExtensivel {
         redistribuir(posBucket);
     }
 
-    // =========================
+ 
     // DUPLICAR DIRETÓRIO
-    // =========================
     private void duplicarDiretorio() throws IOException {
 
         int tamanho = (int) Math.pow(2, profundidadeGlobal);
@@ -214,9 +204,8 @@ public class HashExtensivel {
         }
     }
 
-    // =========================
+ 
     // REDISTRIBUIR
-    // =========================
     private void redistribuir(long posBucket) throws IOException {
 
         buckets.seek(posBucket);
@@ -232,20 +221,19 @@ public class HashExtensivel {
             pos[i] = buckets.readLong();
         }
 
-        // 🔥 limpa bucket antigo
+        //Limpa bucket antigo
         buckets.seek(posBucket);
         buckets.writeInt(0);
 
-        // 🔥 MUITO IMPORTANTE:
-        // reinserir usando o método NORMAL
+        
+        // Reinserir usando o método NORMAL
         for (int i = 0; i < qtd; i++) {
             inserir(ids[i], pos[i]);
         }
     }
 
-    // =========================
+  
     // GET BUCKET
-    // =========================
     private long getEnderecoBucket(int hash) throws IOException {
         diretorio.seek(4 + hash * 8);
         return diretorio.readLong();
