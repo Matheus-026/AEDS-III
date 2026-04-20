@@ -32,9 +32,8 @@ public class AutorDAO {
                !bucket.exists() || bucket.length() == 0;
     }
 
-    // =========================
+
     // CREATE
-    // =========================
     public int create(Autor autor) throws IOException {
         arquivo.seek(0);
 
@@ -64,9 +63,8 @@ public class AutorDAO {
         return autor.getId();
     }
 
-    // =========================
+
     // READ (HASH)
-    // =========================
     public Autor read(int id) throws IOException {
         long pos = hash.buscar(id);
 
@@ -90,9 +88,8 @@ public class AutorDAO {
         return a;
     }
 
-    // =========================
-    // UPDATE (COM HASH 🚀)
-    // =========================
+
+    // UPDATE (COM HASH )
     public boolean update(Autor novo) throws IOException {
         long pos = hash.buscar(novo.getId());
 
@@ -128,9 +125,8 @@ public class AutorDAO {
         return true;
     }
 
-    // =========================
-    // DELETE (COM HASH 🚀)
-    // =========================
+
+    // DELETE (COM HASH )
     public boolean delete(int id) throws IOException {
         long pos = hash.buscar(id);
 
@@ -152,9 +148,8 @@ public class AutorDAO {
         return true;
     }
 
-    // =========================
+
     // RECONSTRUIR HASH
-    // =========================
     public void reconstruirHash() throws IOException {
         RandomAccessFile dir =
                 new RandomAccessFile("data/diretorios/autores_dir.hash", "rw");
