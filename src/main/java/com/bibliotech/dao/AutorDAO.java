@@ -1,25 +1,31 @@
 package com.bibliotech.dao;
 
 import com.bibliotech.model.Autor;
-
 import java.io.*;
 
 public class AutorDAO {
 
     private RandomAccessFile arquivo;
+    private HashExtensivel hash;
 
     public AutorDAO() throws IOException {
         arquivo = new RandomAccessFile("data/autores.dat", "rw");
 
         if (arquivo.length() == 0) {
-            arquivo.writeInt(0); // ultimo ID
-            arquivo.writeInt(0); // quantidade
+            arquivo.writeInt(0);
+            arquivo.writeInt(0);
         }
+
+        hash = new HashExtensivel("autores");
+        reconstruirHash();
     }
 
+    // =========================
+    // CREATE
+    // =========================
     public int create(Autor autor) throws IOException {
-
         arquivo.seek(0);
+
         int ultimoID = arquivo.readInt();
         int qtd = arquivo.readInt();
 
@@ -28,13 +34,16 @@ public class AutorDAO {
 
         autor.setId(ultimoID);
 
-        arquivo.seek(arquivo.length());
+        long pos = arquivo.length();
+        arquivo.seek(pos);
 
         byte[] dados = autor.toByteArray();
 
         arquivo.writeBoolean(true);
         arquivo.writeInt(dados.length);
         arquivo.write(dados);
+
+        hash.inserir(autor.getId(), pos);
 
         arquivo.seek(0);
         arquivo.writeInt(ultimoID);
@@ -43,76 +52,113 @@ public class AutorDAO {
         return autor.getId();
     }
 
+    // =========================
+    // READ (HASH)
+    // =========================
     public Autor read(int id) throws IOException {
+        long pos = hash.buscar(id);
 
-        arquivo.seek(8);
+        if (pos == -1)
+            return null;
 
-        while (arquivo.getFilePointer() < arquivo.length()) {
+        arquivo.seek(pos);
 
-            boolean ativo = arquivo.readBoolean();
-            int tamanho = arquivo.readInt();
+        boolean ativo = arquivo.readBoolean();
+        int tamanho = arquivo.readInt();
 
-            byte[] dados = new byte[tamanho];
-            arquivo.readFully(dados);
+        if (!ativo)
+            return null;
 
-            if (ativo) {
-                Autor a = new Autor();
-                a.fromByteArray(dados);
+        byte[] dados = new byte[tamanho];
+        arquivo.readFully(dados);
 
-                if (a.getId() == id) return a;
-            }
-        }
+        Autor a = new Autor();
+        a.fromByteArray(dados);
 
-        return null;
+        return a;
     }
 
+    // =========================
+    // UPDATE (COM HASH 🚀)
+    // =========================
     public boolean update(Autor novo) throws IOException {
+        long pos = hash.buscar(novo.getId());
 
-        arquivo.seek(8);
+        if (pos == -1)
+            return false;
 
-        while (arquivo.getFilePointer() < arquivo.length()) {
+        arquivo.seek(pos);
 
-            long pos = arquivo.getFilePointer();
+        boolean ativo = arquivo.readBoolean();
+        int tam = arquivo.readInt();
 
-            boolean ativo = arquivo.readBoolean();
-            int tam = arquivo.readInt();
+        if (!ativo)
+            return false;
 
-            byte[] dados = new byte[tam];
-            arquivo.readFully(dados);
+        // marca antigo como removido
+        arquivo.seek(pos);
+        arquivo.writeBoolean(false);
 
-            Autor a = new Autor();
-            a.fromByteArray(dados);
+        // grava novo no final
+        long novaPos = arquivo.length();
+        arquivo.seek(novaPos);
 
-            if (ativo && a.getId() == novo.getId()) {
+        byte[] novos = novo.toByteArray();
 
-                byte[] novos = novo.toByteArray();
+        arquivo.writeBoolean(true);
+        arquivo.writeInt(novos.length);
+        arquivo.write(novos);
 
-                if (novos.length <= tam) {
-                    arquivo.seek(pos + 5);
-                    arquivo.write(novos);
-                } else {
-                    arquivo.seek(pos);
-                    arquivo.writeBoolean(false);
+        // atualiza hash
+        hash.remover(novo.getId());
+        hash.inserir(novo.getId(), novaPos);
 
-                    arquivo.seek(arquivo.length());
-                    arquivo.writeBoolean(true);
-                    arquivo.writeInt(novos.length);
-                    arquivo.write(novos);
-                }
-
-                return true;
-            }
-        }
-
-        return false;
+        return true;
     }
 
+    // =========================
+    // DELETE (COM HASH 🚀)
+    // =========================
     public boolean delete(int id) throws IOException {
+        long pos = hash.buscar(id);
+
+        if (pos == -1)
+            return false;
+
+        arquivo.seek(pos);
+
+        boolean ativo = arquivo.readBoolean();
+
+        if (!ativo)
+            return false;
+
+        arquivo.seek(pos);
+        arquivo.writeBoolean(false);
+
+        hash.remover(id);
+
+        return true;
+    }
+
+    // =========================
+    // RECONSTRUIR HASH
+    // =========================
+    public void reconstruirHash() throws IOException {
+        RandomAccessFile dir =
+                new RandomAccessFile("data/diretorios/autores_dir.hash", "rw");
+        dir.setLength(0);
+        dir.close();
+
+        RandomAccessFile bucket =
+                new RandomAccessFile("data/buckets/autores_bucket.hash", "rw");
+        bucket.setLength(0);
+        bucket.close();
+
+        hash = new HashExtensivel("autores");
 
         arquivo.seek(8);
 
         while (arquivo.getFilePointer() < arquivo.length()) {
-
             long pos = arquivo.getFilePointer();
 
             boolean ativo = arquivo.readBoolean();
@@ -125,14 +171,10 @@ public class AutorDAO {
                 Autor a = new Autor();
                 a.fromByteArray(dados);
 
-                if (a.getId() == id) {
-                    arquivo.seek(pos);
-                    arquivo.writeBoolean(false);
-                    return true;
-                }
+                hash.inserir(a.getId(), pos);
             }
         }
 
-        return false;
+        System.out.println("Hash reconstruído!");
     }
 }

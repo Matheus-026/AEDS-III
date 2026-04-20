@@ -83,13 +83,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const generos = livro.generos ? livro.generos.join(", ") : "Sem gênero";
 
                     html += `
-                        <div class="resultado-item">
-                            <strong>${livro.titulo}</strong><br>
-                            Preço: R$ ${livro.preco}<br>
-                            Gêneros: ${generos}
+                        <div class="card-livro">
+                            <h4>${livro.titulo}</h4>
+                            <p><strong>Preço:</strong> R$ ${livro.preco}</p>
+                            <p><strong>Gêneros:</strong> ${generos}</p>
                         </div>
-                    <hr>
-                 `;
+                    `;
                 });
 
                 divResultados.innerHTML = html;
