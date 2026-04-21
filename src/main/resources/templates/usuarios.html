@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Usuários</title>
     <!-- Link css of page -->
-    <link rel="stylesheet" href="../css/style_usuarios.css">
-    <!-- Link css standard of pages -->
-    <link rel="stylesheet" href="../css/style_standard.css">
+	<link rel="stylesheet" th:href="@{/css/style_usuarios.css}">
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/style_standard.css}">
     <!-- Link Google fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
@@ -16,21 +16,21 @@
         <!-- HEADER -->
 	    <header class="navbar">
 	        <div class="logo">
-	            <img src="../images/logoCoruja.png">
+	            <img th:src="@{/imgs/logoCoruja.png}" alt="Logo da Bibliotech">
 	        </div>
 	
 	        <nav>
-	            <a href="page_adm.html">Página Inicial</a>
-	            <a href="livro.html">Livros</a>
-	            <a href="autor.html">Autores</a>
-	            <a href="usuario.html">Usuários</a>
-	            <a href="emprestimo.html">Empréstimos</a>
-	            <a href="pesquisa_avancada.html">Pesquisa Avançada</a>
+				<a th:href="@{/}">Página Inicial</a>
+				<a th:href="@{/livros}">Livros</a>
+				<a th:href="@{/autores}">Autores</a>
+				<a th:href="@{/usuarios}">Usuários</a>
+				<a th:href="@{/emprestimos}">Empréstimos</a>
+				<a th:href="@{/pesquisa}">Pesquisa Avançada</a>
 	        </nav>
 	
 	        <div class="nav-icons">
-	            <img src="../images/Notificacao.png" class="iconNotificacao">
-	            <img src="../images/Perfil.png" class="iconPerfil">
+				<img th:src="@{/imgs/Notificacao.png}" class="iconNotificacao">
+				<img th:src="@{/imgs/Perfil.png}" class="iconPerfil">
 	        </div>
 	    </header>
 	
@@ -101,6 +101,6 @@
     </main>
 	
     <!-- Script of page -->
-	<script src="../js/script_usuarios.js"></script>
+	<script th:src="@{/js/script_usuarios.js}"></script>
 </body>
 </html>

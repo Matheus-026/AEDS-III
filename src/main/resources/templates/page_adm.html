@@ -6,8 +6,8 @@
     <title>Página Administrador</title>
 
     <!-- CSS -->
-    <link rel="stylesheet" href="../css/style_standard.css">
-    <link rel="stylesheet" href="../css/style_page_adm.css">
+    <link rel="stylesheet" th:href="@{/css/style_standard.css}">
+    <link rel="stylesheet" th:href="@{/css/style_page_adm.css}">
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
@@ -21,21 +21,21 @@
 <!-- HEADER -->
 <header class="navbar">
     <div class="logo">
-        <img src="../images/logoCoruja.png" alt="Logo">
+        <img th:src="@{/imgs/logoCoruja.png}" alt="Logo da Bibliotech">
     </div>
 
     <nav>
-        <a href="page_adm.html">Página Inicial</a>
-        <a href="livro.html">Livros</a>
-        <a href="autor.html">Autores</a>
-        <a href="#">Usuários</a>
-        <a href="emprestimo.html">Empréstimos</a>
-        <a href="#">Pesquisa Avançada</a>
+        <a th:href="@{/}">Página Inicial</a>
+		<a th:href="@{/livros}">Livros</a>
+		<a th:href="@{/autores}">Autores</a>
+		<a th:href="@{/usuarios}">Usuários</a>
+		<a th:href="@{/emprestimos}">Empréstimos</a>
+		<a th:href="@{/pesquisa}">Pesquisa Avançada</a>
     </nav>
 
     <div class="nav-icons">
-        <img src="../images/Notificacao.png" class="iconNotificacao" alt="Notificações">
-        <img src="../images/Perfil.png" class="iconPerfil" alt="Perfil">
+        <img th:src="@{/imgs/Notificacao.png}" class="iconNotificacao" alt="Notificações">
+        <img th:src="@{/imgs/Perfil.png}" class="iconPerfil" alt="Perfil">
     </div>
 </header>
 

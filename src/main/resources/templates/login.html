@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <title>BiblioTech - Login</title>
-    <link rel="stylesheet" href="../css/style_standard.css">
+
+    <!-- Css of page -->
+    <link rel="stylesheet" th:href="@{/css/style_standard.css}">
 <link rel="stylesheet" href="../css/style_login.css?v=2">
 </head>
 <body class="login-page">
     <main class="container-split">
         <section class="logo-section">
-            <img src="../images/logoCoruja.png" alt="BiblioTech Logo" class="logo-img">
+            <img th:src="@{/imgs/logoCoruja.png}" alt="Logo da Bibliotech" class="logo-img">
         </section>
 
         <section class="form-section">
             <div class="form-box">
-                <img src="../images/Perfil.png" alt="Ícone Usuário" class="icon-user">
+                <img th:src="@{/imgs/Perfil.png}" alt="Ícone Usuário" class="icon-user">
                 
                 <form id="form-login">
                     <div class="input-group">
@@ -30,11 +32,12 @@
                     <button type="submit" class="btn-primary">Entrar</button>
                 </form>
                 
-                <a href="cadastro.html" class="link-rodape">Não possui cadastro? Cadastre-se aqui</a>
+                <a th:href="@{/cadastro}" class="link-rodape">Não possui cadastro? Cadastre-se aqui</a>
             </div>
         </section>
     </main>
 
-    <script src="../js/login.js"></script>
+    <!-- JS -->
+    <script th:src="@{/js/ogin.js}"></script>
 </body>
 </html>
