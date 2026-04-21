@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Autores - BiblioTech</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../css/style_standard.css">
+    <link rel="stylesheet" href="../css/style_autor.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+</head>
+
+<body>
+
+<!-- HEADER -->
+<header class="navbar">
+    <div class="logo">
+        <img src="../images/logoCoruja.png">
+    </div>
+
+    <nav>
+        <a href="page_adm.html">Página Inicial</a>
+        <a href="livro.html">Livros</a>
+        <a href="autor.html">Autores</a>
+        <a href="usuario.html">Usuários</a>
+        <a href="emprestimo.html">Empréstimos</a>
+        <a href="pesquisa_avancada.html">Pesquisa Avançada</a>
+    </nav>
+
+    <div class="nav-icons">
+        <img src="../images/Notificacao.png" class="iconNotificacao">
+        <img src="../images/Perfil.png" class="iconPerfil">
+    </div>
+</header>
+
+<!-- CONTEÚDO -->
+<section class="container">
+
+    <div class="top-bar">
+        <h2>Gestão de Autores</h2>
+        <button class="btn btn-primary" onclick="abrirModal()">+ Adicionar Autor</button>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filtros box-background">
+        <input type="text" id="buscar" placeholder="🔍 Buscar autor...">
+
+        <select id="ordenar">
+            <option value="az">Ordenar por: Nome (A-Z)</option>
+            <option value="za">Nome (Z-A)</option>
+        </select>
+    </div>
+
+    <!-- TABELA -->
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Telefone</th>
+                <th>Biografia</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- JS -->
+        </tbody>
+    </table>
+
+</section>
+
+<!-- MODAL AUTOR -->
+<div class="modal" id="modalAutor">
+    <div class="modal-content">
+
+        <span class="close" onclick="fecharModal()">&times;</span>
+
+        <h4 id="modal-titulo">Adicionar Autor</h4>
+
+        <form id="formAutor">
+
+            <label>Nome</label>
+            <input id="nome" required>
+
+            <label>Telefone</label>
+            <input id="telefone" placeholder="(31) 99999-9999">
+
+            <label>Biografia</label>
+            <textarea id="biografia" rows="4" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;"></textarea>
+
+            <div class="modal-actions">
+                <button type="button" onclick="fecharModal()">Cancelar</button>
+                <button type="submit" id="btn-submit">Salvar</button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<div class="modal" id="modalBio">
+    <div class="modal-content">
+        <span class="close" onclick="fecharModalBio()">&times;</span>
+
+        <h4>Biografia completa</h4>
+
+        <p id="bio-texto" style="margin-top:10px; line-height:1.5;"></p>
+    </div>
+
+<!-- Toast -->
+<div id="toast" class="toast" style="display:none;"></div>
+
+<!-- JS -->
+<script src="../js/autor.js"></script>
+
+</body>
+</html>
