@@ -50,7 +50,7 @@ body {
 /* MENU */
 nav {
     display: flex;
-    gap: 120px;
+    gap: 50px;
     /* 🔥 menos exagerado */
     margin-left: 50px;
 }
@@ -60,6 +60,7 @@ nav a {
     text-decoration: none;
     color: #3a6f6f;
     font-weight: 500;
+	font-size: 25px;
     transition: 0.3s;
     /* 🔥 animação suave */
 }
@@ -73,7 +74,7 @@ nav a:hover {
     margin-left: auto;
     background-color: #6f8f82;
     border: none;
-    padding: 10px 30px;
+    padding: 12px 35px;
     border-radius: 20px;
     color: white;
     cursor: pointer;
@@ -98,10 +99,10 @@ nav a:hover {
     position: absolute;
     inset: 0;
 
-    background-image: url("../images/fundoCoruja.png");
+    background-image: url("../imgs/fundoCoruja.png");
     background-repeat: no-repeat;
-    background-position: center;
-    background-size: 1200px;
+    background-position: center 100px;
+    background-size: 1700px;
 
     opacity: 0.10;
     z-index: 0;
@@ -116,18 +117,18 @@ nav a:hover {
 
 /* TEXT */
 .inicio-text {
-    max-width: 600px;
-    transform: translateY(-180px);
+    max-width: 850px;
+    transform: translateY(-160px);
 }
 
 .inicio-text h1 {
-    font-size: 36px;
+    font-size: 50px;
     color: #2f5f5f;
     margin-bottom: 30px;
 }
 
 .inicio-text p {
-    font-size: 25px;
+    font-size: 30px;
     color: #555;
     margin-bottom: 30px;
 }
@@ -137,7 +138,7 @@ nav a:hover {
 .cta-btn {
     background-color: #6f8f82;
     border: none;
-    padding: 12px 25px;
+    padding: 20px 25px;
     border-radius: 30px;
     color: white;
     cursor: pointer;
@@ -150,9 +151,9 @@ nav a:hover {
     height: 600px;
 
 
-    left: -160px;
-    top: -100px;
-    transform: scale(1.2);
+    left: -400px;
+    top: 30px;
+    transform: scale(1.8);
 
 }
 
@@ -187,20 +188,26 @@ nav a:hover {
 }
 
 /*SOBRE*/
+.sobre {
+    padding-top: 180px; /* Ajuste esse valor para descer mais ou menos */
+    display: flex;
+   
+}
+
 .sobre-text {
     margin-left: 60px;
-    max-width: 500px;
+    max-width: 800px;
 
 }
 
 .sobre-text h1 {
-    font-size: 36px;
+    font-size: 50px;
     color: #2f5f5f;
-    margin-bottom: 30px;
+    margin-bottom: 50px;
 }
 
 .sobre-text p {
-    font-size: 25px;
+    font-size: 30px;
     color: #555;
     margin-bottom: 30px;
 
@@ -212,8 +219,8 @@ nav a:hover {
     height: 600px;
 
 
-    left: -180px;
-    top: 50px;
+    left: -350px;
+    top: 200px;
 }
 
 .sobre-design img {
@@ -248,7 +255,7 @@ nav a:hover {
 /* FUNCIONALIDADES */
 .funcionalidades {
     position: relative;
-    padding: 60px 60px 200px 60px;
+    padding: 150px 60px 200px 60px;
     overflow: hidden;
     background-color: #f5f5f5;
 }
@@ -302,7 +309,7 @@ nav a:hover {
     font-weight: 600;
     padding: 8px 16px;
     border-radius: 20px;
-    font-size: 15px;
+    font-size: 30px;
     text-align: center;
 }
 
@@ -314,7 +321,7 @@ nav a:hover {
     flex-direction: column;
     gap: 14px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    font-size: 16px;
+    font-size: 25px;
     color: #444;
     min-height: 160px;
 }
@@ -335,5 +342,5 @@ nav a:hover {
 #inicio,
 #sobre,
 #funcionalidades {
-    scroll-margin-top: 150px;
+    scroll-margin-top: 120px;
 }
