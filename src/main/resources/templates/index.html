@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;600;700&display=swap" rel="stylesheet">
     
     <!-- Css of page -->
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css?v=1}">
 </head>
 
 <body>
@@ -46,10 +46,10 @@
         </div>
 
         <div class="inicio-design">
-            <img th:src="@{/imgs/CirculoVerde.png}">
-            <img th:src="@{/imgs/AbstratoVerde.png}">
-            <img th:src="@{/imgs/AbstratoAmarelo.png}">
-        </div>
+		    <img th:src="@{/imgs/AbstratoAmarelo.png}" class="img3">
+		    <img th:src="@{/imgs/CirculoVerde.png}" class="img1">
+		    <img th:src="@{/imgs/AbstratoVerde.png}" class="img2">
+		</div>
 
     </section>
 
@@ -73,7 +73,7 @@
         </div>
 
         <div class="sobre-design">
-            <img th:src="@{/imgs/CirculoVerde.png}" class="img1-sobre">
+            <img th:src="@{/imgs/CirculoAmarelo.png}" class="img1-sobre">
             <img th:src="@{/imgs/Celular.png}"class="img2-sobre">
             <img th:src="@{/imgs/Computador.png}" class="img3-sobre">
         </div>
