@@ -1,0 +1,158 @@
+/* =========================
+   SETTINS STANDARD (AJUSTADO)
+========================= */
+.box-background {
+    background-color: #ffffff;
+    height: auto;
+    padding: 2rem;
+    border-radius: 15px;
+}
+
+/* =========================
+   GRID INFO
+========================= */
+.grid-fast-info {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+}
+
+.box-fast-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    background-color: #ffffff;
+    height: 180px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.icon-number {
+    display: flex;
+    align-items: center;
+}
+
+.icon-number span {
+    font-size: 2.5rem;
+    color: var(--orange);
+}
+
+.icon-number p {
+    margin-left: 1rem;
+    font-size: 3.2rem;
+}
+
+.text-fast-info p {
+    font-size: 1.5rem;
+    margin-top: 10px;
+}
+
+/* =========================
+   LISTAS
+========================= */
+.grid-info-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: 4rem;
+    gap: 1.5rem;
+    border-radius: 20px;
+}
+
+.box-info-list {
+    background-color: white;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06),
+                0 10px 15px -3px rgba(0,0,0,0.1);
+}
+
+/* título dentro das listas */
+.grid-info-list h4 {
+    font-size: 2rem;
+    color: #3a6f6f;
+}
+
+/* links dentro das listas */
+.grid-info-list p {
+    text-align: right;
+    margin-right: 1rem;
+}
+
+/* =========================
+   ALERTAS
+========================= */
+.title-boxs {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.box-alert {
+    background-color: #eef3f2;
+    padding: 1rem;
+    border-radius: 15px;
+}
+
+.alert {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.title-alert {
+    display: flex;
+    align-items: center;
+}
+
+.title-alert span {
+    font-size: 2rem;
+}
+
+.title-alert p {
+    margin-left: 10px;
+}
+
+/* =========================
+   ÍCONES (FONT AWESOME)
+========================= */
+.fa-solid,
+.fa-regular,
+.fa-brands {
+	color: var(--orange);
+}
+
+/* =========================
+   RESPONSIVIDADE
+========================= */
+@media (max-width: 1200px) {
+
+    .grid-fast-info {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .grid-info-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 754px) {
+
+    .main-content.container {
+        padding: 120px 20px 40px;
+    }
+
+    .grid-fast-info {
+        grid-template-columns: 1fr;
+    }
+
+    .box-background {
+        padding: 1.2rem;
+    }
+
+    .grid-info-list h4 {
+        font-size: 1.5rem;
+    }
+}

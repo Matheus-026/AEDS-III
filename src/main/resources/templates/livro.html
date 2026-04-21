@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Livros - BiblioTech</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../css/style_standard.css">
+    <link rel="stylesheet" href="../css/style_livro.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+</head>
+
+<body>
+
+<!-- HEADER -->
+<header class="navbar">
+    <div class="logo">
+        <img src="../images/logoCoruja.png">
+    </div>
+
+    <nav>
+        <a href="page_adm.html">Página Inicial</a>
+        <a href="livro.html">Livros</a>
+        <a href="autor.html">Autores</a>
+        <a href="usario.html">Usuários</a>
+        <a href="emprestimo.html">Empréstimos</a>
+        <a href="pesquisa_avancada.html">Pesquisa Avançada</a>
+    </nav>
+
+    <div class="nav-icons">
+        <img src="../images/Notificacao.png" class="iconNotificacao">
+        <img src="../images/Perfil.png" class="iconPerfil">
+    </div>
+</header>
+
+<!-- CONTEÚDO -->
+<section class="container">
+
+    <div class="top-bar">
+        <h2>Gestão de Livros</h2>
+        <button class="btn btn-primary" onclick="abrirModal()">+ Adicionar Livro</button>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filtros box-background">
+        <input type="text" id="buscar" placeholder="🔍 Buscar livro...">
+
+        <select id="tipoBusca">
+            <option value="titulo">Filtrar por: Título</option>
+            <option value="autor">Autor</option>
+        </select>
+
+        <select id="ordenar">
+            <option value="az">Ordenar por: Título (A-Z)</option>
+            <option value="za">Título (Z-A)</option>
+            <option value="preco">Preço</option>
+            <option value="data">Data</option>
+        </select>
+    </div>
+
+    <!-- TABELA -->
+    <table>
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Autor</th>
+                <th>Gênero</th>
+                <th>Preço</th>
+                <th>Publicado em</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- JS -->
+        </tbody>
+    </table>
+
+</section>
+
+<!-- MODAL LIVRO -->
+<div class="modal" id="modalLivro">
+    <div class="modal-content">
+
+        <span class="close" onclick="fecharModal()">&times;</span>
+
+        <h4 id="modal-titulo">Adicionar Livro</h4>
+
+        <form id="formLivro">
+
+            <label>Título</label>
+            <input id="titulo" required>
+			
+			<label>Autor</label>
+			<div class="autocomplete-container">
+			    <input type="text" id="autorInput" placeholder="Digite o nome do autor">
+			    <div id="listaAutores" class="lista-sugestoes" style="display:none;"></div>
+			</div>
+			<label>Gêneros</label>
+
+			<div id="generos-container" class="generos-container">
+			    <input id="genero-input" placeholder="Digite e pressione Enter">
+			</div>
+
+            <label>Preço</label>
+            <input type="text" id="preco" value="0.00">
+
+            <label>Data de Publicação</label>
+            <input id="data" type="date" required>
+
+            <div class="modal-actions">
+                <button type="button" onclick="fecharModal()">Cancelar</button>
+                <button type="submit" id="btn-submit">Salvar</button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast" style="display:none;"></div>
+
+<!-- JS -->
+<script src="../js/livro.js"></script>
+
+</body>
+</html>

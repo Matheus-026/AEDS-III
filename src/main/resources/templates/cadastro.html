@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>BiblioTech - Cadastro</title>
+    <link rel="stylesheet" href="../css/style_standard.css">
+    <link rel="stylesheet" href="../css/style_login.css">
+</head>
+<body class="login-page">
+    <main class="container-split">
+        <section class="logo-section">
+            <img src="../images/logoCoruja.png" alt="BiblioTech Logo" class="logo-img">
+        </section>
+
+        <section class="form-section">
+            <div class="form-box">
+                <form id="form-cadastro">
+                    <div class="input-group">
+                        <label>Nome:</label>
+                        <input type="text" id="cad-nome" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label>E-mail:</label>
+                        <input type="email" id="cad-email" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Senha:</label>
+                        <input type="password" id="cad-senha" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Confirme sua senha:</label>
+                        <input type="password" id="cad-senha-confirma" required>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">Cadastrar</button>
+                </form>
+                
+                <a href="login.html" class="link-rodape">Já possui cadastro? Faça login aqui</a>
+            </div>
+        </section>
+    </main>
+
+    <script src="../js/cadastro.js"></script>
+</body>
+</html>
