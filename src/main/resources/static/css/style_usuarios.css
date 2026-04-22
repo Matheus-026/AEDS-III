@@ -5,94 +5,159 @@ body::before {
     content: "";
     position: fixed;
     inset: 0;
-
     background-image: url("../images/corujaF.png");
     background-repeat: no-repeat;
     background-position: center 160px;
     background-size: 650px;
-
     opacity: 0.30;
     z-index: -1;
     pointer-events: none;
 }
 
-
-/* ─── Container do autocomplete ───────────────────────────────────────────── */
-.autocomplete-container {
-    position: relative;
+/* =========================
+   BARRA DE FILTROS
+========================= */
+.filtros {
     width: 100%;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-top: 20px;
+    margin-bottom: 0;
+    padding: 15px;
+    background: #ffffff;
+    border-radius: 10px 10px 0 0;
+    border-bottom: 1px solid #eef3f2;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-/* Input */
-.autocomplete-container input {
-    width: 100%;
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
+/* input de busca dentro dos filtros — oval */
+.filtros input[type="text"],
+.filtros input[type="search"] {
+    flex: 1;
+    padding: 10px 20px;
+    border-radius: 999px;
+    border: 1px solid #ddd;
     font-size: 14px;
+    font-family: inherit;
     outline: none;
+    background: #f9f9f9;
+    transition: 0.2s;
+    color: #333;
+}
+
+.filtros input[type="text"]:focus,
+.filtros input[type="search"]:focus {
+    border-color: #4a90e2;
+    box-shadow: 0 0 6px rgba(74,144,226,0.25);
+    background: #fff;
+}
+
+.filtros input::placeholder {
+    color: #aaa;
+}
+
+/* select de status — oval, seta customizada */
+.filtros select {
+    padding: 10px 40px 10px 18px;
+    border-radius: 999px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    background-color: #f9f9f9;
+    color: #333;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    cursor: pointer;
     transition: 0.2s;
 }
 
-.autocomplete-container input:focus {
+.filtros select:focus {
     border-color: #4a90e2;
-    box-shadow: 0 0 4px rgba(74,144,226,0.3);
+    box-shadow: 0 0 6px rgba(74,144,226,0.25);
+    background-color: #fff;
 }
 
-/* Lista de sugestões */
-.lista-sugestoes {
-    position: absolute;
-    top: 105%;
-    left: 0;
-    right: 0;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 999;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
+/* =========================
+   MODAL — CAMPOS OVAL
+========================= */
 
-/* Item da sugestão */
-.item-sugestao {
-    padding: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.2s;
-}
-
-/* Hover */
-.item-sugestao:hover {
-    background-color: #f0f4ff;
-}
-
-/* Modal input labels (combina com edição) */
+/* labels */
 .modal-content label {
     display: block;
     margin-top: 12px;
     margin-bottom: 6px;
     font-weight: 600;
     font-size: 14px;
+    color: #444;
 }
 
-/* Inputs do modal */
-.modal-content input {
+/* inputs de texto, email, password — oval */
+.modal-content input[type="text"],
+.modal-content input[type="email"],
+.modal-content input[type="password"],
+.modal-content input[type="number"],
+.modal-content input[type="date"] {
     width: 100%;
-    padding: 10px;
-    border-radius: 8px;
+    padding: 10px 18px;
+    border-radius: 999px;
     border: 1px solid #ccc;
     font-size: 14px;
+    font-family: inherit;
     outline: none;
     transition: 0.2s;
+    background: #fff;
+    color: #333;
 }
 
-.modal-content input:focus {
+.modal-content input[type="text"]:focus,
+.modal-content input[type="email"]:focus,
+.modal-content input[type="password"]:focus,
+.modal-content input[type="number"]:focus,
+.modal-content input[type="date"]:focus {
     border-color: #4a90e2;
-    box-shadow: 0 0 4px rgba(74,144,226,0.3);
+    box-shadow: 0 0 6px rgba(74,144,226,0.25);
 }
 
-/* Botões do modal */
+/* select tipo — oval, seta customizada */
+.modal-content select {
+    width: 100%;
+    padding: 10px 40px 10px 18px;
+    border-radius: 999px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: 0.2s;
+    background-color: #fff;
+    color: #333;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    cursor: pointer;
+}
+
+.modal-content select:focus {
+    border-color: #4a90e2;
+    box-shadow: 0 0 6px rgba(74,144,226,0.25);
+}
+
+/* divisor entre campos de usuário e confirmação admin */
+.modal-content hr {
+    border: none;
+    border-top: 1px solid #e0e0e0;
+    margin: 18px 0 6px;
+}
+
+/* =========================
+   BOTÕES DO MODAL
+========================= */
 .modal-actions {
     display: flex;
     justify-content: flex-end;
@@ -101,15 +166,17 @@ body::before {
 }
 
 .modal-actions button {
-    padding: 10px 16px;
-    border-radius: 8px;
+    padding: 10px 24px;
+    border-radius: 999px;
     border: none;
     cursor: pointer;
     font-weight: 600;
+    font-size: 14px;
+    font-family: inherit;
     transition: 0.2s;
 }
 
-/* Botão cancelar */
+/* cancelar */
 .modal-actions button[type="button"] {
     background: var(--light-gray-color);
     color: var(--primary-color);
@@ -119,12 +186,71 @@ body::before {
     background: #c7c7c7;
 }
 
-/* Botão principal */
+/* submit */
+.modal-actions button[type="submit"],
 #btn-submit {
     background: var(--orange);
     color: var(--white-color);
 }
 
+.modal-actions button[type="submit"]:hover,
 #btn-submit:hover {
     background: #e6952f;
+}
+
+/* =========================
+   AUTOCOMPLETE
+========================= */
+.autocomplete-container {
+    position: fixed;
+    width: 100%;
+}
+
+.autocomplete-container input {
+    width: 100%;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    outline: none;
+    transition: 0.2s;
+}
+
+.autocomplete-container input:focus {
+    border-color: #4a90e2;
+    box-shadow: 0 0 6px rgba(74,144,226,0.25);
+}
+
+.lista-sugestoes {
+    position: absolute;
+    top: 105%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 999;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.item-sugestao {
+    padding: 10px 18px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.item-sugestao:hover {
+    background-color: #f0f4ff;
+}
+
+/* =========================
+   TABELA COLADA AO FILTRO
+========================= */
+.filtros + table {
+    margin-top: 0;
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }

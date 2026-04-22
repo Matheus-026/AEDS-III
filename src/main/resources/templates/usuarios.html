@@ -4,103 +4,138 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Usuários</title>
-    <!-- Link css of page -->
-	<link rel="stylesheet" th:href="@{/css/style_usuarios.css}">
-    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/style_usuarios.css}">
     <link rel="stylesheet" th:href="@{/css/style_standard.css}">
-    <!-- Link Google fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <main>
-        <!-- HEADER -->
-	    <header class="navbar">
-	        <div class="logo">
-	            <img th:src="@{/imgs/logoCoruja.png}" alt="Logo da Bibliotech">
-	        </div>
-	
-	        <nav>
-				<a th:href="@{/adm}">Página Inicial</a>
-				<a th:href="@{/livros}">Livros</a>
-				<a th:href="@{/autores}">Autores</a>
-				<a th:href="@{/usuarios}">Usuários</a>
-				<a th:href="@{/emprestimos}">Empréstimos</a>
-				<a th:href="@{/pesquisa}">Pesquisa Avançada</a>
-	        </nav>
-	
-	        <div class="nav-icons">
-				<img th:src="@{/imgs/Notificacao.png}" class="iconNotificacao">
-				<img th:src="@{/imgs/Perfil.png}" class="iconPerfil">
-	        </div>
-	    </header>
-	
-	    <!-- CONTEÚDO -->
-	    <section class="container">
-	
-	        <div class="top-bar">
-	            <h2>Gestão de Usuários</h2>
-                <input class="input_search" type="search" name="" id="search_usuario">
-	            <button class="btn btn-primary" onclick="abrirModal()">+ Registrar Usuário</button>
-	        </div>
-	
-	        <!-- TABELA — tbody preenchido dinamicamente pelo JS -->
-	        <table>
-	            <thead>
-	                <tr>
-	                    <th>Nome</th>
-	                    <th>E-mail</th>
-	                    <th>Tipo</th>
-                        <th>Ações</th>
-	                </tr>
-	            </thead>
-	            <tbody>
-	                <!-- Linhas inseridas por renderizarTabela() -->
-	            </tbody>
-	        </table>
-	
-	    </section>
-	
-	    <!-- MODAL -->
-	    <div class="modal" id="modal">
-	        <div class="modal-content">
-	
-	            <span class="close" onclick="fecharModal()">&times;</span>
-	
-	            <!-- Título muda entre "Registrar" e "Editar" -->
-	            <h4 id="modal-titulo">Registrar Usuário</h4>
-	
-	            <form id="formUsuario" autocomplete="off">
-	
-	                <label>Nome</label>
-	                <input id="input-nome" type="text" placeholder="Digite nome do usuário" required>
-	
-					<label>E-mail</label>
-					<input id="input-email" type="email" placeholder="Digite o e-mail" required>
-	
-	                <label>Tipo</label>
-	                <select id="input-tipo">
-                        <option value="Standard">Standard</option>
-                        <option value="adm">Adm</option>
-                    </select>
+<main>
 
-                    <label>Senha</label>
-                    <input id="input-senha" type="password" placeholder="Digite a senha" required>
-	
-	                <div class="modal-actions">
-	                    <button type="button" onclick="fecharModal()">Cancelar</button>
-	                    <!-- Texto muda entre "Adicionar" e "Salvar" -->
-	                    <button type="submit" id="btn-submit">Adicionar</button>
-	                </div>
-	
-	            </form>
-	        </div>
-	    </div>
-	
-	    <!-- Toast de feedback (sucesso / erro) -->
-	    <div id="toast" class="toast" style="display:none;"></div>
-    </main>
-	
-    <!-- Script of page -->
-	<script th:src="@{/js/script_usuarios.js}"></script>
+    <!-- HEADER -->
+    <header class="navbar">
+        <div class="logo">
+            <img th:src="@{/imgs/logoCoruja.png}" alt="Logo da Bibliotech">
+        </div>
+        <nav>
+            <a th:href="@{/adm}">Página Inicial</a>
+            <a th:href="@{/livros}">Livros</a>
+            <a th:href="@{/autores}">Autores</a>
+            <a th:href="@{/usuarios}">Usuários</a>
+            <a th:href="@{/emprestimos}">Empréstimos</a>
+            <a th:href="@{/pesquisa}">Pesquisa Avançada</a>
+        </nav>
+        <div class="nav-icons">
+            <img th:src="@{/imgs/Notificacao.png}" class="iconNotificacao">
+            <img th:src="@{/imgs/Perfil.png}" class="iconPerfil">
+        </div>
+    </header>
+
+    <!-- CONTEÚDO -->
+    <section class="container">
+
+        <div class="top-bar">
+            <h2>Gestão de Usuários</h2>
+            <button class="btn btn-primary" onclick="abrirModal()">+ Registrar Usuário</button>
+        </div>
+
+        <!-- BARRA DE BUSCA -->
+        <div class="filtros">
+            <input type="search" id="search_usuario" placeholder="🔍 Buscar usuário...">
+            <select id="filtro-tipo">
+                <option value="">Todos os tipos</option>
+                <option value="Adm">Adm</option>
+                <option value="Standard">Standard</option>
+            </select>
+        </div>
+
+        <!-- TABELA -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>Tipo</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+    </section>
+
+    <!-- ======================================================= -->
+    <!-- MODAL CRIAR                                              -->
+    <!-- ======================================================= -->
+    <div class="modal" id="modal-criar">
+        <div class="modal-content">
+            <span class="close" onclick="fecharModalCriar()">&times;</span>
+            <h4>Registrar Usuário</h4>
+
+            <form id="formCriar" autocomplete="off">
+                <label>Nome</label>
+                <input id="criar-nome" type="text" placeholder="Digite o nome do usuário" required>
+
+                <label>E-mail</label>
+                <input id="criar-email" type="email" placeholder="Digite o e-mail" required>
+
+                <label>Tipo</label>
+                <select id="criar-tipo">
+                    <option value="Standard">Standard</option>
+                    <option value="Adm">Adm</option>
+                </select>
+
+                <label>Senha</label>
+                <input id="criar-senha" type="password" placeholder="Digite a senha" required>
+
+                <div class="modal-actions">
+                    <button type="button" onclick="fecharModalCriar()">Cancelar</button>
+                    <button type="submit">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- MODAL EDITAR                                             -->
+    <!-- ======================================================= -->
+    <div class="modal" id="modal-editar">
+        <div class="modal-content">
+            <span class="close" onclick="fecharModalEditar()">&times;</span>
+            <h4>Editar Usuário</h4>
+
+            <form id="formEditar" autocomplete="off">
+                <label>Nome</label>
+                <input id="editar-nome" type="text" placeholder="Nome do usuário" required>
+
+                <label>E-mail</label>
+                <input id="editar-email" type="email" placeholder="E-mail" required>
+
+                <label>Tipo</label>
+                <select id="editar-tipo">
+                    <option value="Standard">Standard</option>
+                    <option value="Adm">Adm</option>
+                </select>
+
+                <label>Nova Senha <span style="font-weight:400;font-size:0.85em;">(deixe em branco para não alterar)</span></label>
+                <input id="editar-nova-senha" type="password" placeholder="Nova senha do usuário">
+
+                <hr>
+
+                <label>Senha do Administrador <span style="color:red;">*</span></label>
+                <input id="editar-senha-adm" type="password" placeholder="Confirme com sua senha de admin" required>
+
+                <div class="modal-actions">
+                    <button type="button" onclick="fecharModalEditar()">Cancelar</button>
+                    <button type="submit">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast" style="display:none;"></div>
+
+</main>
+<script th:src="@{/js/script_usuarios.js}"></script>
 </body>
 </html>
