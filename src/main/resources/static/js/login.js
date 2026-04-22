@@ -18,9 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 localStorage.setItem('usuarioLogado', JSON.stringify(usuario));
                 
                 if(usuario.tipo === 'Adm') {
-                    window.location.href = 'page_adm.html';
+                    window.location.href = '/adm';
                 } else {
-                    window.location.href = 'pesquisa_avancada.html';
+                    window.location.href = '/pesquisa';
                 }
             } else {
                 alert('Email ou senha incorretos!');
