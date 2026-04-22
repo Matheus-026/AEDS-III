@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         try {
-            const response = await fetch('http://localhost:8080/api/usuarios/cadastrar', {
+            const response = await fetch('http://localhost:8080/api/usuarios', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(novoUsuario)
@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (response.ok) {
                 alert('Cadastro realizado com sucesso! Faça login.');
-                window.location.href = 'login.html';
+                window.location.href = '/login';
             } else {
                 alert('Erro ao realizar o cadastro.');
             }

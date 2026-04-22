@@ -6,10 +6,10 @@
 	    <title>Empréstimos - BiblioTech</title>
 	
 	    <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;600;700&display=swap" rel="stylesheet">
-		<link rel="stylesheet" href="../css/style_standard.css">
-		<link rel="stylesheet" href="../css/emprestimo.css">
-		
-	    
+
+		<!-- Css of page -->
+		<link rel="stylesheet" th:href="@{/css/style_standard.css}">
+		<link rel="stylesheet" th:href="@{/css/style_emprestimo.css}">
 	</head>
 	
 	<body>
@@ -17,16 +17,16 @@
 	    <!-- HEADER -->
 	    <header class="navbar">
 	        <div class="logo">
-	            <img src="../images/logoCoruja.png">
+				<img th:src="@{/imgs/logoCoruja.png}" alt="Logo da Bibliotech">
 	        </div>
 	
 	        <nav>
-	            <a href="page_adm.html">Página Inicial</a>
-	            <a href="livro.html">Livros</a>
-	            <a href="autor.html">Autores</a>
-	            <a href="usuario.html">Usuários</a>
-	            <a href="emprestimo.html">Empréstimos</a>
-	            <a href="pesquisa_avancada.html">Pesquisa Avançada</a>
+	            <a th:href="@{/adm}">Página Inicial</a>
+				<a th:href="@{/livros}">Livros</a>
+				<a th:href="@{/autores}">Autores</a>
+				<a th:href="@{/usuarios}">Usuários</a>
+				<a th:href="@{/emprestimos}">Empréstimos</a>
+				<a th:href="@{/pesquisa}">Pesquisa Avançada</a>
 	        </nav>
 	
 	        <div class="nav-icons">
@@ -102,7 +102,7 @@
 	    <!-- Toast de feedback (sucesso / erro) -->
 	    <div id="toast" class="toast" style="display:none;"></div>
 	
-	    <script src="../js/emprestimo.js"></script>
+		<script th:src="@{/js/emprestimo.js}"></script>
 	</body>
 	
 	</html>

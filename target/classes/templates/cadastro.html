@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>BiblioTech - Cadastro</title>
-    <link rel="stylesheet" href="../css/style_standard.css">
-    <link rel="stylesheet" href="../css/style_login.css">
+    <!-- Css of pages -->
+    <link rel="stylesheet" th:href="@{/css/style_standard.css}">
+    <link rel="stylesheet" th:href="@{/css/style_login.css}">
 </head>
 <body class="login-page">
     <main class="container-split">
         <section class="logo-section">
-            <img src="../images/logoCoruja.png" alt="BiblioTech Logo" class="logo-img">
+            <img th:src="@{/imgs/logoCoruja.png}" alt="Logo da Bibliotech" class="logo-img">
         </section>
 
         <section class="form-section">
@@ -38,11 +39,12 @@
                     <button type="submit" class="btn-primary">Cadastrar</button>
                 </form>
                 
-                <a href="login.html" class="link-rodape">Já possui cadastro? Faça login aqui</a>
+                <a th:href="@{/login}" class="link-rodape">Já possui cadastro? Faça login aqui</a>
             </div>
         </section>
     </main>
 
-    <script src="../js/cadastro.js"></script>
+    <!-- Script of page -->
+    <script th:src="@{/js/cadastro.js}"></script>
 </body>
 </html>

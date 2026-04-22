@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <title>BiblioTech</title>
     <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
+    
+    <!-- Css of page -->
+    <link rel="stylesheet" th:href="@{/css/style.css?v=1}">
 </head>
 
 <body>
@@ -13,7 +15,7 @@
     <!-- NAVBAR -->
     <header class="navbar">
         <div class="logo">
-            <img src="../images/logoCoruja.png" alt="Logo">
+            <img th:src="@{/imgs/logoCoruja.png}" alt="Logo da Bibliotech">
         </div>
 
         <nav>
@@ -22,7 +24,7 @@
             <a href="#funcionalidades">Funcionalidades</a>
         </nav>
 
-        <button class="login-btn">Login</button>
+        <a th:href="@{/login}" class="login-btn" style="text-decoration: none; display: inline-block; text-align: center;">Login</a>
     </header>
 
     <!-- inicio -->
@@ -40,14 +42,14 @@
                 acervo e usuários.
             </p>
 
-            <button class="cta-btn">Comece Agora</button>
+            <a th:href="@{/login}" class="cta-btn" style="text-decoration: none; display: inline-block; text-align: center;">Comece Agora</a>
         </div>
 
         <div class="inicio-design">
-            <img src="../images/CirculoVerde.png" class="img1">
-            <img src="../images/AbstratoVerde.png" class="img2">
-            <img src="../images/AbstratoAmarelo.png" class="img3">
-        </div>
+		    <img th:src="@{/imgs/AbstratoAmarelo.png}" class="img3">
+		    <img th:src="@{/imgs/CirculoVerde.png}" class="img1">
+		    <img th:src="@{/imgs/AbstratoVerde.png}" class="img2">
+		</div>
 
     </section>
 
@@ -71,9 +73,9 @@
         </div>
 
         <div class="sobre-design">
-            <img src="../images/CirculoAmarelo.png" class="img1-sobre">
-            <img src="../images/Celular.png" class="img2-sobre">
-            <img src="../images/Computador.png" class="img3-sobre">
+            <img th:src="@{/imgs/CirculoAmarelo.png}" class="img1-sobre">
+            <img th:src="@{/imgs/Celular.png}"class="img2-sobre">
+            <img th:src="@{/imgs/Computador.png}" class="img3-sobre">
         </div>
 
     </section>
@@ -82,7 +84,7 @@
     <section id="funcionalidades" class="funcionalidades">
 
         <div class="func-header">
-            <img src="../images/CorujaF.png" alt="Coruja" class="func-coruja">
+            <img th:src="@{/imgs/CorujaF.png}" alt="Coruja" class="func-coruja">
             <h1>Funcionalidades</h1>
         </div>
 
@@ -127,8 +129,7 @@
 
     </section>
 
-    <script src="js/script.js"></script>
-
+    <script th:src="@{/js/script.js}"></script>
 </body>
 
 </html>

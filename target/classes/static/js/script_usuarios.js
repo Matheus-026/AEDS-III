@@ -91,9 +91,7 @@ function abrirModal() {
     document.getElementById("btn-submit").textContent   = "Adicionar";
     document.getElementById("formUsuario").reset();
     
-    // O campo de senha deve ser obrigatório na criação
     document.getElementById("input-senha").required = true;
-    
     document.getElementById("modal").style.display = "flex";
 }
 
@@ -129,7 +127,6 @@ async function criarUsuario() {
 async function abrirEdicao(id) {
     fecharMenus();
     try {
-        // Busca os dados do usuário específico
         const res = await fetch(`${API_Usuarios}/${id}`);
         const user = await res.json();
 
@@ -139,12 +136,10 @@ async function abrirEdicao(id) {
         document.getElementById("modal-titulo").textContent = "Editar Usuário";
         document.getElementById("btn-submit").textContent   = "Salvar";
 
-        // Preenche o formulário
         document.getElementById("input-nome").value = user.nome;
         document.getElementById("input-email").value = user.email;
         document.getElementById("input-tipo").value = user.tipo;
         
-        // Na edição, a senha pode ser opcional (ou mantida se vazia no seu Java)
         document.getElementById("input-senha").value = "";
         document.getElementById("input-senha").required = false;
 
@@ -177,18 +172,23 @@ async function salvarEdicao() {
     }
 }
 
-// ─── Excluir ────────────────────────────────────────────────────────────────
+// ─── Excluir (ATUALIZADO COM TRATAMENTO DE ERRO 409) ─────────────────────────
 async function excluirUsuario(id) {
     fecharMenus();
     if (!confirm("Tem certeza que deseja excluir este usuário?")) return;
 
     try {
         const res = await fetch(`${API_Usuarios}/${id}`, { method: "DELETE" });
+        
         if (res.ok) {
             mostrarToast("Usuário excluído.");
             await carregarUsuarios();
+        } else if (res.status === 409) {
+            // Captura a mensagem de erro de empréstimo ativo vinda do Java
+            const msgErro = await res.text();
+            mostrarToast(msgErro, "erro");
         } else {
-            mostrarToast("Erro ao excluir.", "erro");
+            mostrarToast("Erro ao excluir usuário.", "erro");
         }
     } catch {
         mostrarToast("Erro ao conectar ao servidor.", "erro");
@@ -224,18 +224,28 @@ function lerFormulario() {
         return null;
     }
 
-    // Só valida senha se não estiver editando ou se o campo não estiver vazio
     if (!modoEdicao && !senha) {
         mostrarToast("Senha é obrigatória para novos usuários.", "erro");
         return null;
     }
 
-    return {
+    // Estrutura o payload conforme esperado pelo Backend
+    const payload = {
         nome: nome,
         email: email,
-        tipo: tipo || "Standard",
-        senha: senha
+        tipo: tipo || "Standard"
     };
+
+    // Lógica para diferenciar 'senha' de 'novaSenha' no Controller
+    if (senha) {
+        if (modoEdicao) {
+            payload.novaSenha = senha;
+        } else {
+            payload.senha = senha;
+        }
+    }
+
+    return payload;
 }
 
 function mostrarToast(msg, tipo = "sucesso") {
@@ -248,5 +258,5 @@ function mostrarToast(msg, tipo = "sucesso") {
     
     setTimeout(() => { 
         toast.style.display = "none"; 
-    }, 3000);
+    }, 4000); // Aumentado para 4s para dar tempo de ler mensagens maiores
 }

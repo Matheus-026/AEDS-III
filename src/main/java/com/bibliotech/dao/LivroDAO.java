@@ -1,6 +1,11 @@
 package com.bibliotech.dao;
 
+import com.bibliotech.model.Autor;
+import com.bibliotech.model.Emprestimo;
+import com.bibliotech.dao.AutorDAO;
 import com.bibliotech.model.Livro;
+import com.bibliotech.model.Usuario;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -230,47 +235,124 @@ public class LivroDAO {
         return resultado;
     }
 
-   
     // BUSCA AVANÇADA (varredura com filtros combinados)
-    public List<Livro> buscaAvancada(String titulo, String genero,
-                                     float precoMin, float precoMax)
-            throws IOException {
+    public List<Livro> buscaAvancada(String titulo, String genero, float precoMin, float precoMax,
+            String autorNome, String autorTelefone,
+            String usuarioNome, String usuarioEmail, String usuarioStatus,
+            String emprestimoLivro, String emprestimoUsuario,
+            String dataInicial, String dataFinal) throws IOException {
 
         List<Livro> resultados = new ArrayList<>();
+
+        // --- 1. INICIALIZAÇÃO DOS DAOs ---
+        // Instanciamos os DAOs uma única vez para evitar abrir/fechar arquivos dentro
+        // do loop
+        AutorDAO autorDAO = new AutorDAO();
+        EmprestimoDAO emprestimoDAO = new EmprestimoDAO();
+        UsuarioDAO usuarioDAO = new UsuarioDAO();
+
+        // Move o ponteiro para o início dos registros de livros (pulando o cabeçalho)
         arquivo.seek(8);
 
         while (arquivo.getFilePointer() < arquivo.length()) {
 
-            boolean ativo   = arquivo.readBoolean();
-            int     tamanho = arquivo.readInt();
-            byte[]  dados   = new byte[tamanho];
+            // --- 2. LEITURA DO REGISTRO DE LIVRO ---
+            boolean ativo = arquivo.readBoolean();
+            int tamanho = arquivo.readInt();
+            byte[] dados = new byte[tamanho];
             arquivo.readFully(dados);
 
-            if (!ativo) continue;
+            if (!ativo)
+                continue;
 
             Livro l = new Livro();
             l.fromByteArray(dados);
 
+            // 'ok' começa verdadeiro; se falhar em qualquer filtro, vira falso
             boolean ok = true;
 
-            if (titulo != null && !titulo.isEmpty())
+            // --- 3. FILTROS DIRETOS (LIVRO) ---
+
+            // Título
+            if (titulo != null && !titulo.isEmpty()) {
                 if (!l.getTitulo().toLowerCase().contains(titulo.toLowerCase()))
                     ok = false;
-
-            if (ok && genero != null && !genero.isEmpty()) {
-                boolean achou = false;
-                for (String g : l.getGeneros())
-                    if (g.toLowerCase().contains(genero.toLowerCase())) {
-                        achou = true;
-                        break;
-                    }
-                if (!achou) ok = false;
             }
 
-            if (ok && precoMin >= 0 && l.getPreco() < precoMin) ok = false;
-            if (ok && precoMax >= 0 && l.getPreco() > precoMax) ok = false;
+            // Gênero
+            if (ok && genero != null && !genero.isEmpty()) {
+                boolean achouG = false;
+                for (String g : l.getGeneros()) {
+                    if (g.toLowerCase().contains(genero.toLowerCase())) {
+                        achouG = true;
+                        break;
+                    }
+                }
+                if (!achouG)
+                    ok = false;
+            }
 
-            if (ok) resultados.add(l);
+            // Preço
+            if (ok && precoMin >= 0 && l.getPreco() < precoMin)
+                ok = false;
+            if (ok && precoMax >= 0 && l.getPreco() > precoMax)
+                ok = false;
+
+            // --- 4. FILTRO CRUZADO (AUTOR) ---
+            boolean filtrarAutor = (autorNome != null && !autorNome.isEmpty()) ||
+                    (autorTelefone != null && !autorTelefone.isEmpty());
+
+            if (ok && filtrarAutor) {
+                Autor autor = autorDAO.read(l.getIdAutor()); // Busca no Hash O(1)
+                if (autor != null) {
+                    boolean nomeBate = (autorNome == null || autorNome.isEmpty()) ||
+                            autor.getNome().toLowerCase().contains(autorNome.toLowerCase());
+                    boolean telBate = (autorTelefone == null || autorTelefone.isEmpty()) ||
+                            autor.getTelefone().contains(autorTelefone);
+
+                    if (!(nomeBate && telBate))
+                        ok = false;
+                } else {
+                    ok = false; // Se o livro exige autor e não achou no arquivo, descarta
+                }
+            }
+
+            // --- 5. FILTRO CRUZADO (USUÁRIO E STATUS) ---
+            boolean filtrarUsuario = (usuarioNome != null && !usuarioNome.isEmpty());
+            boolean filtrarStatus = (usuarioStatus != null && !usuarioStatus.isEmpty()
+                    && !usuarioStatus.equalsIgnoreCase("Qualquer"));
+
+            if (ok && (filtrarUsuario || filtrarStatus)) {
+                boolean encontrouVinculoValido = false;
+
+                // Busca todos os empréstimos deste livro usando seu índice secundário
+                // (HashLivro)
+                List<Emprestimo> historico = emprestimoDAO.buscarPorLivro(l.getId());
+
+                for (Emprestimo e : historico) {
+                    // Aqui você pode adicionar: if (e.isDevolvido()) continue;
+                    // para filtrar apenas quem está com o livro AGORA.
+
+                    Usuario u = usuarioDAO.read(e.getIdUsuario()); // Busca no Hash O(1)
+                    if (u != null) {
+                        boolean nomeUBate = !filtrarUsuario
+                                || u.getNome().toLowerCase().contains(usuarioNome.toLowerCase());
+                        boolean statusUBate = !filtrarStatus || u.getStatus().equalsIgnoreCase(usuarioStatus);
+
+                        if (nomeUBate && statusUBate) {
+                            encontrouVinculoValido = true;
+                            break;
+                        }
+                    }
+                }
+                if (!encontrouVinculoValido)
+                    ok = false;
+            }
+
+            // --- 6. ADICIONAR AO RESULTADO ---
+            if (ok) {
+                resultados.add(l);
+            }
         }
 
         return resultados;

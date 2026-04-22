@@ -9,8 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;600;700&display=swap" rel="stylesheet">
 
     <!-- CSS -->
-    <link rel="stylesheet" href="../css/style_standard.css">
-    <link rel="stylesheet" href="../css/livro.css">
+    <link rel="stylesheet" th:href="@{/css/style_standard.css}">
+    <link rel="stylesheet" th:href="@{/css/style_autor.css}">
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
@@ -21,21 +21,21 @@
 <!-- HEADER -->
 <header class="navbar">
     <div class="logo">
-        <img src="../images/logoCoruja.png">
+        <img th:src="@{/imgs/logoCoruja.png}" alt="Logo da Bibliotech">
     </div>
 
     <nav>
-        <a href="page_adm.html">Página Inicial</a>
-        <a href="livro.html">Livros</a>
-        <a href="autor.html">Autores</a>
-        <a href="usuario.html">Usuários</a>
-        <a href="emprestimo.html">Empréstimos</a>
-        <a href="pesquisa_avancada.html">Pesquisa Avançada</a>
+        <a th:href="@{/adm}">Página Inicial</a>
+		<a th:href="@{/livros}">Livros</a>
+		<a th:href="@{/autores}">Autores</a>
+		<a th:href="@{/usuarios}">Usuários</a>
+		<a th:href="@{/emprestimos}">Empréstimos</a>
+		<a th:href="@{/pesquisa}">Pesquisa Avançada</a>
     </nav>
 
     <div class="nav-icons">
-        <img src="../images/Notificacao.png" class="iconNotificacao">
-        <img src="../images/Perfil.png" class="iconPerfil">
+        <img th:src="@{/imgs/Notificacao.png}" class="iconNotificacao">
+        <img th:src="@{/imgs/Perfil.png}" class="iconPerfil">
     </div>
 </header>
 
@@ -115,7 +115,7 @@
 <div id="toast" class="toast" style="display:none;"></div>
 
 <!-- JS -->
-<script src="../js/autor.js"></script>
+<script th:src="@{/js/autor.js}"></script>
 
 </body>
 </html>

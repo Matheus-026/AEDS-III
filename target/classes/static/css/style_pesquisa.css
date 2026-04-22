@@ -270,3 +270,80 @@ nav a:hover {
     border: none; /* Remove a borda padrão do Firefox */
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
+
+/* Container que divide a tela */
+.layout-esq-dir {
+    display: flex;
+    flex-direction: row; /* Garante o lado a lado */
+    align-items: flex-start; /* ALINHAMENTO NO TOPO: É isso que impede um lado de descer */
+    gap: 60px; 
+    margin-top: 30px;
+    width: 100%;
+}
+
+/* Coluna da Esquerda (Resultados) */
+.coluna-resultados {
+    width: 300px; 
+    flex-shrink: 0; 
+}
+
+/* Coluna da Direita (Formulário) */
+.pesquisa-form {
+    flex-grow: 1; 
+    margin-top: 0 !important; /* <--- O SEGREDO ESTÁ AQUI: Mata qualquer margem antiga que esteja empurrando para baixo */
+    padding-top: 0 !important; /* Garante que não tem espaço interno sobrando no topo */
+    background: transparent; 
+    box-shadow: none;
+}
+
+/* Garante que o form continue com 2 colunas */
+.pesquisa-form .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
+
+/* --- Estilo "Card de Lista" para os resultados --- */
+#resultados {
+    display: flex; 
+    flex-direction: column;
+    gap: 20px; /* Espaço generoso entre cada quadradinho */
+}
+
+.resultado-item {
+    background-color: #eef5f2; /* <-- MUDANÇA AQUI: Um verdinho bem claro, puxado para a cor da sua Navbar */
+    border: 1px solid #cfe4db; /* <-- MUDANÇA AQUI: Borda com o mesmo verde do seu slider para combinar */
+    border-radius: 8px; 
+    padding: 20px; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03); 
+    
+    font-size: 1.4rem;
+    color: #555;
+    font-family: "Open Sans", sans-serif;
+    line-height: 1.6;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; 
+}
+
+/* Efeito ao passar o mouse por cima do card (opcional, levanta a caixinha) */
+.resultado-item:hover {
+    border-color: #6c9c8c;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+    transform: translateY(-3px);
+}
+
+/* Título do livro dentro da caixinha */
+.resultado-item strong:first-child {
+    font-size: 2.2rem;
+    color: #d3802d; /* Laranja da paleta Bibliotech */
+    font-family: 'Abhaya Libre', serif;
+    display: block; /* Garante que o título fique sozinho na linha */
+    margin-bottom: 12px; /* Espaço abaixo do título */
+    border-bottom: 1px dashed #eee; /* Linha pontilhada estilosa */
+    padding-bottom: 10px;
+}
+
+/* Estilo para as palavras "Preço:" e "Gêneros:" */
+.resultado-item strong {
+    color: #333;
+    font-weight: 600;
+}

@@ -24,9 +24,21 @@ public class PesquisaController {
              @RequestParam(name = "titulo", required = false) String titulo,
              @RequestParam(name = "genero", required = false) String genero,
              @RequestParam(name = "min", defaultValue = "-1") float precoMin,
-             @RequestParam(name = "max", defaultValue = "-1") float precoMax) 
+             @RequestParam(name = "max", defaultValue = "-1") float precoMax,
+             @RequestParam(name = "autorNome", required = false) String autorNome,
+             @RequestParam(name = "autorTelefone", required = false) String autorTelefone,
+             @RequestParam(name = "usuarioNome", required = false) String usuarioNome,
+             @RequestParam(name = "usuarioEmail", required = false) String usuarioEmail,
+             @RequestParam(name = "usuarioStatus", required = false) String usuarioStatus,
+             @RequestParam(name = "emprestimoLivro", required = false) String emprestimoLivro,
+             @RequestParam(name = "emprestimoUsuario", required = false) String emprestimoUsuario,
+             @RequestParam(name = "dataInicial", required = false) String dataInicial,
+             @RequestParam(name = "dataFinal", required = false) String dataFinal) 
              throws IOException {
 
-         return dao.buscaAvancada(titulo, genero, precoMin, precoMax);
+         // Agora passamos TODOS os parâmetros capturados para o seu DAO
+         return dao.buscaAvancada(titulo, genero, precoMin, precoMax, autorNome, autorTelefone, 
+                                  usuarioNome, usuarioEmail, usuarioStatus, 
+                                  emprestimoLivro, emprestimoUsuario, dataInicial, dataFinal);
     }
 }
