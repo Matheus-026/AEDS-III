@@ -1,9 +1,12 @@
 // ─── Configuração da API ──────────────────────────────────────────────────────
-const API_URL = "http://localhost:8080/api/emprestimos";
-const API_LIVROS = "http://localhost:8080/api/livros";
+const API_URL      = "http://localhost:8080/api/emprestimos";
+const API_LIVROS   = "http://localhost:8080/api/livros";
+const API_USUARIOS = "http://localhost:8080/api/usuarios";
 
-// cache de livros
-let livrosCache = [];
+// caches
+let livrosCache      = [];
+let emprestimosCache = [];
+let usuariosCache = [];
 
 // ─── Navbar hide on scroll ────────────────────────────────────────────────────
 const navbar = document.querySelector('.navbar');
@@ -23,14 +26,19 @@ window.addEventListener('scroll', () => {
 let modoEdicao = false;
 let idEditando  = null;
 
-// ─── Autocomplete elementos ───────────────────────────────────────────────────
-const inputLivro = document.getElementById("input-livro-nome");
-const sugestoesDiv = document.getElementById("lista-livros");
+// ─── Elementos de autocomplete ────────────────────────────────────────────────
+const inputUsuario    = document.getElementById("input-usuario-nome");
+const sugestoesUsuario = document.getElementById("lista-usuarios");
+
+const inputLivro    = document.getElementById("input-livro-nome");
+const sugestoesLivro = document.getElementById("lista-livros");
 
 // ─── Ao carregar a página ─────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
-    await carregarLivros();
+    await Promise.all([carregarLivros(), carregarUsuarios()]);
     carregarEmprestimos();
+
+    document.getElementById("search_emprestimo").addEventListener("input", aplicarFiltros);
 
     document.getElementById("formEmprestimo").addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -41,10 +49,44 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
-    configurarAutocomplete();
+    document.getElementById("search_emprestimo").addEventListener("input", (e) => {
+        const termo = e.target.value.toLowerCase();
+        const filtrados = emprestimosCache.filter(emp =>
+            (emp.nomeUsuario  || "").toLowerCase().includes(termo) ||
+            (emp.tituloLivro  || "").toLowerCase().includes(termo) ||
+            (emp.status       || "").toLowerCase().includes(termo)
+        );
+        renderizarTabela(filtrados);
+    });
+
+    configurarAutocomplete(
+        inputUsuario,
+        sugestoesUsuario,
+        () => usuariosCache,
+        u => u.nome,
+        u => u.id
+    );
+
+    document.getElementById("search_emprestimo").addEventListener("input", (e) => {
+        const termo = e.target.value.toLowerCase();
+        const filtrados = emprestimosCache.filter(emp =>
+            (emp.nomeUsuario  || "").toLowerCase().includes(termo) ||
+            (emp.tituloLivro  || "").toLowerCase().includes(termo) ||
+            (emp.status       || "").toLowerCase().includes(termo)
+        );
+        renderizarTabela(filtrados);
+    });
+
+    configurarAutocomplete(
+        inputLivro,
+        sugestoesLivro,
+        () => livrosCache,
+        l => l.titulo,
+        l => l.id
+    );
 });
 
-// ─── Buscar livros ────────────────────────────────────────────────────────────
+// ─── Carregar dados ───────────────────────────────────────────────────────────
 async function carregarLivros() {
     try {
         const res = await fetch(API_LIVROS);
@@ -55,32 +97,40 @@ async function carregarLivros() {
     }
 }
 
-// ─── Autocomplete ─────────────────────────────────────────────────────────────
-function configurarAutocomplete() {
-    inputLivro.addEventListener("input", () => {
-        const texto = inputLivro.value.toLowerCase();
-        sugestoesDiv.innerHTML = "";
+async function carregarUsuarios() {
+    try {
+        const res = await fetch(API_USUARIOS);
+        usuariosCache = await res.json();
+    } catch (err) {
+        console.error("Erro ao carregar usuários:", err);
+        mostrarToast("Erro ao carregar usuários.", "erro");
+    }
+}
 
-        // limpa id quando usuário digita manualmente
-        inputLivro.dataset.id = "";
+// ─── Autocomplete genérico ────────────────────────────────────────────────────
+// Funciona para qualquer lista: basta passar o input, o div de sugestões,
+// uma função que retorna o cache, e funções para extrair label e id de cada item.
+function configurarAutocomplete(input, sugestoesDiv, getCache, getLabel, getId) {
+    input.addEventListener("input", () => {
+        const texto = input.value.toLowerCase().trim();
+        sugestoesDiv.innerHTML = "";
+        input.dataset.id = "";
 
         if (!texto) return;
 
-        const filtrados = livrosCache.filter(l =>
-            l.titulo.toLowerCase().includes(texto)
+        const filtrados = getCache().filter(item =>
+            getLabel(item).toLowerCase().includes(texto)
         );
 
-        filtrados.slice(0, 5).forEach(livro => {
+        filtrados.slice(0, 5).forEach(item => {
             const div = document.createElement("div");
             div.classList.add("item-sugestao");
-            div.textContent = livro.titulo;
+            div.textContent = getLabel(item);
 
             div.addEventListener("click", (e) => {
                 e.stopPropagation();
-
-                inputLivro.value = livro.titulo;
-                inputLivro.dataset.id = livro.id;
-
+                input.value      = getLabel(item);
+                input.dataset.id = getId(item);
                 sugestoesDiv.innerHTML = "";
             });
 
@@ -88,12 +138,10 @@ function configurarAutocomplete() {
         });
     });
 
-    // fechar sugestões ao clicar fora
+    // fecha sugestões ao clicar fora
     document.addEventListener("click", (e) => {
-        const clicouNoInput = e.target.closest("#input-livro-nome");
-        const clicouNaLista = e.target.closest("#sugestoes-livros");
-
-        if (!clicouNoInput && !clicouNaLista) {
+        if (!e.target.closest(`#${input.id}`) &&
+            !e.target.closest(`#${sugestoesDiv.id}`)) {
             sugestoesDiv.innerHTML = "";
         }
     });
@@ -102,13 +150,30 @@ function configurarAutocomplete() {
 // ─── Carregar empréstimos ─────────────────────────────────────────────────────
 async function carregarEmprestimos() {
     try {
-        const res  = await fetch(API_URL);
+        const res   = await fetch(API_URL);
         const lista = await res.json();
+        emprestimosCache = lista;
         renderizarTabela(lista);
     } catch (err) {
         console.error("Erro ao carregar empréstimos:", err);
         mostrarToast("Não foi possível conectar ao servidor.", "erro");
     }
+}
+
+// ─── Filtros ──────────────────────────────────────────────────────────────────
+function aplicarFiltros() {
+    const termo  = document.getElementById("search_emprestimo").value.toLowerCase();
+    const status = document.getElementById("filtro-status").value;
+
+    const filtrados = emprestimosCache.filter(emp => {
+        const bateTexto = !termo ||
+            emp.nomeUsuario.toLowerCase().includes(termo) ||
+            emp.tituloLivro.toLowerCase().includes(termo);
+        const bateStatus = !status || emp.status === status;
+        return bateTexto && bateStatus;
+    });
+
+    renderizarTabela(filtrados);
 }
 
 function renderizarTabela(lista) {
@@ -141,19 +206,22 @@ function renderizarTabela(lista) {
     });
 }
 
-// ─── Modal ───────────────────────────────────────────────────────────────────
+// ─── Modal ────────────────────────────────────────────────────────────────────
 function abrirModal() {
     modoEdicao = false;
     idEditando  = null;
     document.getElementById("modal-titulo").textContent = "Registrar Empréstimo";
     document.getElementById("btn-submit").textContent   = "Adicionar";
     document.getElementById("formEmprestimo").reset();
-    inputLivro.dataset.id = "";
+    inputUsuario.dataset.id = "";
+    inputLivro.dataset.id   = "";
     document.getElementById("modal").style.display = "flex";
 }
 
 function fecharModal() {
     document.getElementById("modal").style.display = "none";
+    sugestoesUsuario.innerHTML = "";
+    sugestoesLivro.innerHTML   = "";
 }
 
 // ─── Criar empréstimo ─────────────────────────────────────────────────────────
@@ -181,7 +249,7 @@ async function criarEmprestimo() {
     }
 }
 
-// ─── Editar ──────────────────────────────────────────────────────────────────
+// ─── Editar ───────────────────────────────────────────────────────────────────
 async function abrirEdicao(id) {
     fecharMenus();
     try {
@@ -193,9 +261,13 @@ async function abrirEdicao(id) {
 
         document.getElementById("modal-titulo").textContent = "Editar Empréstimo";
         document.getElementById("btn-submit").textContent   = "Salvar";
-        document.getElementById("input-usuario").value      = emp.idUsuario;
 
-        inputLivro.value = emp.tituloLivro;
+        // usuário
+        inputUsuario.value      = emp.nomeUsuario;
+        inputUsuario.dataset.id = emp.idUsuario;
+
+        // livro
+        inputLivro.value      = emp.tituloLivro;
         inputLivro.dataset.id = emp.idLivro;
 
         document.getElementById("input-data-emp").value = emp.dataEmprestimo;
@@ -231,7 +303,7 @@ async function salvarEdicao() {
     }
 }
 
-// ─── Devolver ────────────────────────────────────────────────────────────────
+// ─── Devolver ─────────────────────────────────────────────────────────────────
 async function registrarDevolucao(id) {
     fecharMenus();
     if (!confirm("Confirmar devolução deste empréstimo?")) return;
@@ -249,7 +321,7 @@ async function registrarDevolucao(id) {
     }
 }
 
-// ─── Excluir ────────────────────────────────────────────────────────────────
+// ─── Excluir ──────────────────────────────────────────────────────────────────
 async function excluirEmprestimo(id) {
     fecharMenus();
     if (!confirm("Tem certeza que deseja excluir este empréstimo?")) return;
@@ -284,21 +356,29 @@ document.addEventListener('click', (e) => {
     if (!e.target.closest('.acoes')) fecharMenus();
 });
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function lerFormulario() {
-    const idUsuario      = document.getElementById("input-usuario").value.trim();
+    const idUsuario      = inputUsuario.dataset.id;
     const idLivro        = inputLivro.dataset.id;
     const dataEmprestimo = document.getElementById("input-data-emp").value;
     const dataDevolucao  = document.getElementById("input-data-dev").value;
 
-    if (!idUsuario || !idLivro || !dataEmprestimo || !dataDevolucao) {
-        mostrarToast("Preencha todos os campos.", "erro");
+    if (!idUsuario) {
+        mostrarToast("Selecione um usuário da lista de sugestões.", "erro");
+        return null;
+    }
+    if (!idLivro) {
+        mostrarToast("Selecione um livro da lista de sugestões.", "erro");
+        return null;
+    }
+    if (!dataEmprestimo || !dataDevolucao) {
+        mostrarToast("Preencha as datas.", "erro");
         return null;
     }
 
     return {
         idUsuario: parseInt(idUsuario),
-        idLivro: parseInt(idLivro),
+        idLivro:   parseInt(idLivro),
         dataEmprestimo,
         dataDevolucao
     };
@@ -318,8 +398,8 @@ function formatarData(iso) {
 
 function mostrarToast(msg, tipo = "sucesso") {
     const toast = document.getElementById("toast");
-    toast.textContent = msg;
-    toast.className   = `toast ${tipo}`;
+    toast.textContent   = msg;
+    toast.className     = `toast ${tipo}`;
     toast.style.display = "block";
     setTimeout(() => { toast.style.display = "none"; }, 3000);
 }

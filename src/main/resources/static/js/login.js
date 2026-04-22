@@ -17,10 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 const usuario = await response.json();
                 localStorage.setItem('usuarioLogado', JSON.stringify(usuario));
                 
-                if(usuario.tipo === 'Adm') {
+                if(usuario.tipo === 'adm') {
                     window.location.href = '/adm';
                 } else {
-                    window.location.href = '/pesquisa';
+                    window.location.href = '/adm'; // depois vai ser mudado para pagina de usuarios não administradores
                 }
             } else {
                 alert('Email ou senha incorretos!');

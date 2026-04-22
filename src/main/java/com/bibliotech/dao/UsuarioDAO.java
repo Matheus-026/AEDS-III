@@ -39,17 +39,15 @@ public class UsuarioDAO {
         }
 
         if (datVazio()) {
-            Usuario admin = Usuario.criarAdminPadrao();
-            create(admin);
+            create(Usuario.criarAdminPadrao());
             System.out.println("[UsuarioDAO] Admin padrão criado.");
         }
     }
 
-
+  
     // CRIPTOGRAFIA XOR + Base64
-    // XOR puro pode gerar bytes nulos ou de controle que corrompem o writeUTF.
-    // Encapsular em Base64 garante que a string gravada é sempre ASCII segura.
-
+    // XOR puro pode gerar bytes nulos que corrompem o writeUTF.
+    // Base64 garante que a string gravada é sempre ASCII segura.
     private String criptografar(String senha) {
         byte[] bytes = senha.getBytes(java.nio.charset.StandardCharsets.UTF_8);
         byte[] chave = CHAVE_XOR.getBytes(java.nio.charset.StandardCharsets.UTF_8);
@@ -85,8 +83,10 @@ public class UsuarioDAO {
         }
     }
 
-
+  
     // CREATE
+    // Recebe senha limpa → grava criptografada → restaura limpa em memória.
+  
     public int create(Usuario usuario) throws IOException {
         synchronized (lock) {
             arquivo.seek(0);
@@ -123,8 +123,9 @@ public class UsuarioDAO {
         }
     }
 
-  
+   
     // READ
+    // Retorna senha em texto limpo (descriptografada).
     public Usuario read(int id) throws IOException {
         synchronized (lock) {
             long pos = hash.buscar(id);
@@ -145,7 +146,9 @@ public class UsuarioDAO {
         }
     }
 
+ 
     // LIST ALL
+    // Retorna senhas em texto limpo.
     public List<Usuario> listAll() throws IOException {
         synchronized (lock) {
             List<Usuario> usuarios = new ArrayList<>();
@@ -154,8 +157,8 @@ public class UsuarioDAO {
             while (arquivo.getFilePointer() < arquivo.length()) {
                 long restante = arquivo.length() - arquivo.getFilePointer();
                 if (restante < 5) {
-                    System.out.println("[UsuarioDAO] listAll: cabeçalho truncado no fim do arquivo ("
-                        + restante + " bytes). Interrompendo leitura.");
+                    System.out.println("[UsuarioDAO] listAll: cabeçalho truncado ("
+                        + restante + " bytes). Interrompendo.");
                     break;
                 }
 
@@ -165,20 +168,19 @@ public class UsuarioDAO {
                 if (ativo) {
                     byte[] dados = lerRegistroSeguro(tamanho);
                     if (dados == null) break;
-
                     try {
                         Usuario u = new Usuario();
                         u.fromByteArray(dados);
                         u.setSenha(descriptografar(u.getSenha()));
                         usuarios.add(u);
                     } catch (Exception e) {
-                        System.out.println("[UsuarioDAO] listAll: erro ao desserializar registro. Ignorando.");
+                        System.out.println("[UsuarioDAO] listAll: registro inválido ignorado.");
                     }
                 } else {
                     long restanteParaPular = arquivo.length() - arquivo.getFilePointer();
                     if (tamanho < 0 || tamanho > restanteParaPular) {
                         System.out.println("[UsuarioDAO] listAll: skipBytes inválido ("
-                            + tamanho + "). Interrompendo leitura.");
+                            + tamanho + "). Interrompendo.");
                         break;
                     }
                     arquivo.skipBytes(tamanho);
@@ -188,53 +190,43 @@ public class UsuarioDAO {
         }
     }
 
-
+   
     // UPDATE
+    // Recebe senha em texto limpo (igual ao que read() devolve).
+    // Criptografa exatamente uma vez antes de gravar.
     public boolean update(Usuario novoUsuario) throws IOException {
         synchronized (lock) {
-
             long pos = hash.buscar(novoUsuario.getId());
-
-            if (pos == -1)
-                return false;
+            if (pos == -1) return false;
 
             arquivo.seek(pos);
-
-            boolean ativo = arquivo.readBoolean();
-            int tamanhoAntigo = arquivo.readInt();
-
-            if (!ativo)
-                return false;
+            boolean ativo        = arquivo.readBoolean();
+            int     tamanhoAntigo = arquivo.readInt();
+            if (!ativo) return false;
 
             String senhaOriginal = novoUsuario.getSenha();
             novoUsuario.setSenha(criptografar(senhaOriginal));
 
             byte[] novosDados = novoUsuario.toByteArray();
 
-        
-            // cabe no espaço antigo
             if (novosDados.length <= tamanhoAntigo) {
-
-                // mantém tamanho antigo para evitar lixo/truncamento
-                arquivo.seek(pos + 5); // começa após lapide + tamanho
+               
+                arquivo.seek(pos + 1);
+                arquivo.writeInt(novosDados.length); 
                 arquivo.write(novosDados);
 
-                // preenche sobra com zeros
-                for(int i=novosDados.length; i<tamanhoAntigo; i++){
+                // preenche sobra com zeros para não deixar lixo legível
+                int sobra = tamanhoAntigo - novosDados.length;
+                for (int i = 0; i < sobra; i++)
                     arquivo.writeByte(0);
-                }
 
-            }
-            else {
-
-                // exclusão lógica do antigo
+            } else {
+                // ── move para o fim 
                 arquivo.seek(pos);
                 arquivo.writeBoolean(false);
 
                 long novaPos = arquivo.length();
-
                 arquivo.seek(novaPos);
-
                 arquivo.writeBoolean(true);
                 arquivo.writeInt(novosDados.length);
                 arquivo.write(novosDados);
@@ -244,12 +236,11 @@ public class UsuarioDAO {
             }
 
             novoUsuario.setSenha(senhaOriginal);
-
             return true;
         }
     }
 
-
+  
     // DELETE
     public boolean delete(int id) throws IOException {
         synchronized (lock) {
@@ -267,8 +258,8 @@ public class UsuarioDAO {
         }
     }
 
-
     // LOGIN
+    // Retorna o usuário com senha em texto limpo, ou null se não encontrado.
     public Usuario login(String email, String senha) throws IOException {
         synchronized (lock) {
             String senhaCriptografada = criptografar(senha);
@@ -295,7 +286,7 @@ public class UsuarioDAO {
                             return u;
                         }
                     } catch (Exception e) {
-                        System.out.println("[UsuarioDAO] login: erro ao desserializar registro. Ignorando.");
+                        System.out.println("[UsuarioDAO] login: registro inválido ignorado.");
                     }
                 }
             }
@@ -303,7 +294,7 @@ public class UsuarioDAO {
         }
     }
 
-  
+   
     // LISTAR NO TERMINAL
     public void listar() throws IOException {
         System.out.println("\n--- LISTA DE USUÁRIOS ---");
@@ -320,7 +311,6 @@ public class UsuarioDAO {
         System.out.println("-------------------------\n");
     }
 
- 
     // RECONSTRUIR HASH
     public void reconstruirHash() throws IOException {
         zerarArquivo("data/diretorios/usuarios_dir.hash");
@@ -353,18 +343,16 @@ public class UsuarioDAO {
         System.out.println("[UsuarioDAO] Hash reconstruído com sucesso.");
     }
 
-
+    
     // HELPERS PRIVADOS
     private boolean datVazio() throws IOException {
         arquivo.seek(8);
         while (arquivo.getFilePointer() < arquivo.length()) {
             long restante = arquivo.length() - arquivo.getFilePointer();
             if (restante < 5) break;
-
             boolean ativo = arquivo.readBoolean();
             int     tam   = arquivo.readInt();
             if (ativo) return false;
-
             long restanteParaPular = arquivo.length() - arquivo.getFilePointer();
             if (tam < 0 || tam > restanteParaPular) break;
             arquivo.skipBytes(tam);

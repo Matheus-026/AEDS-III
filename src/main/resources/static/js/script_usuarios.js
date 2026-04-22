@@ -1,62 +1,66 @@
-// ─── Configuração da API ──────────────────────────────────────────────────────
+// ─── API ──────────────────────────────────────────────────────────────────────
 const API_Usuarios = "http://localhost:8080/api/usuarios";
 
-// Cache de usuarios
 let UsuariosCache = [];
+let idEditando    = null;
 
 // ─── Navbar hide on scroll ────────────────────────────────────────────────────
 const navbar = document.querySelector('.navbar');
 let ultimoScroll = 0;
-
 window.addEventListener('scroll', () => {
     const scrollAtual = window.scrollY;
-    if (scrollAtual > ultimoScroll && scrollAtual > 200) {
-        navbar.classList.add('escondida');
-    } else {
-        navbar.classList.remove('escondida');
-    }
+    navbar.classList.toggle('escondida', scrollAtual > ultimoScroll && scrollAtual > 200);
     ultimoScroll = scrollAtual;
 });
 
-// ─── Estado de edição ─────────────────────────────────────────────────────────
-let modoEdicao = false;
-let idEditando = null;
-
-// ─── Ao carregar a página ─────────────────────────────────────────────────────
+// ─── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
     await carregarUsuarios();
 
-    const form = document.getElementById("formUsuario");
-    if (form) {
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            if (modoEdicao) {
-                await salvarEdicao();
-            } else {
-                await criarUsuario();
-            }
+    document.getElementById("formCriar").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        await criarUsuario();
+    });
+
+    document.getElementById("formEditar").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        await salvarEdicao();
+    });
+
+    // ── Filtros combinados ────────────────────────────────────────────────────
+    function aplicarFiltros() {
+        const termo = document.getElementById("search_usuario").value.toLowerCase();
+        const tipo  = document.getElementById("filtro-tipo").value;
+
+        const filtrados = UsuariosCache.filter(u => {
+            const buscaOk = u.nome.toLowerCase().includes(termo)
+                         || u.email.toLowerCase().includes(termo)
+                         || u.tipo.toLowerCase().includes(termo);
+            const tipoOk  = tipo === "" || u.tipo === tipo;
+            return buscaOk && tipoOk;
         });
+
+        renderizarTabela(filtrados);
     }
+
+    document.getElementById("search_usuario").addEventListener("input", aplicarFiltros);
+    document.getElementById("filtro-tipo").addEventListener("change", aplicarFiltros);
 });
 
-// ─── Buscar usuarios ────────────────────────────────────────────────────────────
+// ─── Carregar ─────────────────────────────────────────────────────────────────
 async function carregarUsuarios() {
     try {
         const res = await fetch(API_Usuarios);
-        if (!res.ok) throw new Error("Falha ao buscar dados");
-        
+        if (!res.ok) throw new Error();
         UsuariosCache = await res.json();
         renderizarTabela(UsuariosCache);
-    } catch (err) {
-        console.error("Erro ao carregar usuarios:", err);
+    } catch {
         mostrarToast("Erro ao conectar ao servidor.", "erro");
     }
 }
 
 function renderizarTabela(lista) {
     const tbody = document.querySelector("table tbody");
-    if (!tbody) return;
-    
     tbody.innerHTML = "";
 
     if (lista.length === 0) {
@@ -82,78 +86,112 @@ function renderizarTabela(lista) {
     });
 }
 
-// ─── Modal ───────────────────────────────────────────────────────────────────
+// ─── Modal Criar ──────────────────────────────────────────────────────────────
 function abrirModal() {
-    modoEdicao = false;
-    idEditando = null;
-    
-    document.getElementById("modal-titulo").textContent = "Registrar Usuário";
-    document.getElementById("btn-submit").textContent   = "Adicionar";
-    document.getElementById("formUsuario").reset();
-    
-    document.getElementById("input-senha").required = true;
-    document.getElementById("modal").style.display = "flex";
+    document.getElementById("formCriar").reset();
+    document.getElementById("modal-criar").style.display = "flex";
 }
 
-function fecharModal() {
-    document.getElementById("modal").style.display = "none";
+function fecharModalCriar() {
+    document.getElementById("modal-criar").style.display = "none";
 }
 
-// ─── Criar usuario ────────────────────────────────────────────────────────────
+// ─── Modal Editar ─────────────────────────────────────────────────────────────
+async function abrirEdicao(id) {
+    fecharMenus();
+    try {
+        const res  = await fetch(`${API_Usuarios}/${id}`);
+        const user = await res.json();
+
+        idEditando = id;
+
+        document.getElementById("editar-nome").value        = user.nome;
+        document.getElementById("editar-email").value       = user.email;
+        document.getElementById("editar-tipo").value        = user.tipo;
+        document.getElementById("editar-nova-senha").value  = "";
+        document.getElementById("editar-senha-adm").value   = "";
+
+        document.getElementById("modal-editar").style.display = "flex";
+    } catch {
+        mostrarToast("Erro ao carregar dados para edição.", "erro");
+    }
+}
+
+function fecharModalEditar() {
+    document.getElementById("modal-editar").style.display = "none";
+    document.getElementById("editar-senha-adm").value = "";
+    document.getElementById("editar-nova-senha").value = "";
+}
+
+// ─── Criar ────────────────────────────────────────────────────────────────────
 async function criarUsuario() {
-    const payload = lerFormulario();
-    if (!payload) return;
+    const nome  = document.getElementById("criar-nome").value.trim();
+    const email = document.getElementById("criar-email").value.trim();
+    const tipo  = document.getElementById("criar-tipo").value;
+    const senha = document.getElementById("criar-senha").value.trim();
+
+    if (!nome || !email || !senha) {
+        mostrarToast("Nome, e-mail e senha são obrigatórios.", "erro");
+        return;
+    }
 
     try {
         const res = await fetch(API_Usuarios, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ nome, email, senha, tipo })
         });
 
         if (res.ok) {
             mostrarToast("Usuário registrado com sucesso!");
-            fecharModal();
+            fecharModalCriar();
             await carregarUsuarios();
         } else {
-            mostrarToast("Erro ao criar usuário.", "erro");
+            const msg = await res.text();
+            mostrarToast("Erro: " + msg, "erro");
         }
     } catch {
         mostrarToast("Erro ao conectar ao servidor.", "erro");
     }
 }
 
-// ─── Editar ──────────────────────────────────────────────────────────────────
-async function abrirEdicao(id) {
-    fecharMenus();
-    try {
-        const res = await fetch(`${API_Usuarios}/${id}`);
-        const user = await res.json();
-
-        modoEdicao = true;
-        idEditando = id;
-
-        document.getElementById("modal-titulo").textContent = "Editar Usuário";
-        document.getElementById("btn-submit").textContent   = "Salvar";
-
-        document.getElementById("input-nome").value = user.nome;
-        document.getElementById("input-email").value = user.email;
-        document.getElementById("input-tipo").value = user.tipo;
-        
-        document.getElementById("input-senha").value = "";
-        document.getElementById("input-senha").required = false;
-
-        document.getElementById("modal").style.display = "flex";
-    } catch (err) {
-        mostrarToast("Erro ao carregar dados para edição.", "erro");
-    }
-}
-
+// ─── Salvar Edição ────────────────────────────────────────────────────────────
 async function salvarEdicao() {
-    const payload = lerFormulario();
-    if (!payload) return;
+    const nome      = document.getElementById("editar-nome").value.trim();
+    const email     = document.getElementById("editar-email").value.trim();
+    const tipo      = document.getElementById("editar-tipo").value;
+    const novaSenha = document.getElementById("editar-nova-senha").value.trim();
+    const senhaAdm  = document.getElementById("editar-senha-adm").value.trim();
+
+    if (!nome || !email) {
+        mostrarToast("Nome e e-mail são obrigatórios.", "erro");
+        return;
+    }
+
+    if (!senhaAdm) {
+        mostrarToast("Confirme com a senha do administrador.", "erro");
+        return;
+    }
 
     try {
+        // ── 1. Verifica a senha do admin antes de qualquer alteração ──────────
+        const verificacao = await fetch(`${API_Usuarios}/verificar-admin`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ senha: senhaAdm })
+        });
+
+        if (!verificacao.ok) {
+            mostrarToast("Senha do administrador incorreta.", "erro");
+            document.getElementById("editar-senha-adm").value = "";
+            document.getElementById("editar-senha-adm").focus();
+            return;
+        }
+
+        // ── 2. Senha correta — envia a atualização ────────────────────────────
+        const payload = { nome, email, tipo };
+        if (novaSenha) payload.novaSenha = novaSenha;
+
         const res = await fetch(`${API_Usuarios}/${idEditando}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -162,31 +200,31 @@ async function salvarEdicao() {
 
         if (res.ok) {
             mostrarToast("Usuário atualizado!");
-            fecharModal();
+            fecharModalEditar();
             await carregarUsuarios();
         } else {
-            mostrarToast("Erro ao atualizar usuário.", "erro");
+            const msg = await res.text();
+            mostrarToast("Erro: " + msg, "erro");
         }
     } catch {
         mostrarToast("Erro ao conectar ao servidor.", "erro");
     }
 }
 
-// ─── Excluir (ATUALIZADO COM TRATAMENTO DE ERRO 409) ─────────────────────────
+// ─── Excluir ──────────────────────────────────────────────────────────────────
 async function excluirUsuario(id) {
     fecharMenus();
     if (!confirm("Tem certeza que deseja excluir este usuário?")) return;
 
     try {
         const res = await fetch(`${API_Usuarios}/${id}`, { method: "DELETE" });
-        
+
         if (res.ok) {
             mostrarToast("Usuário excluído.");
             await carregarUsuarios();
         } else if (res.status === 409) {
-            // Captura a mensagem de erro de empréstimo ativo vinda do Java
-            const msgErro = await res.text();
-            mostrarToast(msgErro, "erro");
+            const msg = await res.text();
+            mostrarToast(msg, "erro");
         } else {
             mostrarToast("Erro ao excluir usuário.", "erro");
         }
@@ -195,7 +233,7 @@ async function excluirUsuario(id) {
     }
 }
 
-// ─── Menu Ações ───────────────────────────────────────────────────────────────
+// ─── Menu ─────────────────────────────────────────────────────────────────────
 function toggleMenu(botao) {
     const menu = botao.nextElementSibling;
     document.querySelectorAll('.menu-acoes').forEach(m => {
@@ -212,51 +250,12 @@ document.addEventListener('click', (e) => {
     if (!e.target.closest('.acoes')) fecharMenus();
 });
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-function lerFormulario() {
-    const nome = document.getElementById("input-nome").value.trim();
-    const email = document.getElementById("input-email").value.trim();
-    const tipo = document.getElementById("input-tipo").value.trim();
-    const senha = document.getElementById("input-senha").value.trim();
-
-    if (!nome || !email) {
-        mostrarToast("Nome e E-mail são obrigatórios.", "erro");
-        return null;
-    }
-
-    if (!modoEdicao && !senha) {
-        mostrarToast("Senha é obrigatória para novos usuários.", "erro");
-        return null;
-    }
-
-    // Estrutura o payload conforme esperado pelo Backend
-    const payload = {
-        nome: nome,
-        email: email,
-        tipo: tipo || "Standard"
-    };
-
-    // Lógica para diferenciar 'senha' de 'novaSenha' no Controller
-    if (senha) {
-        if (modoEdicao) {
-            payload.novaSenha = senha;
-        } else {
-            payload.senha = senha;
-        }
-    }
-
-    return payload;
-}
-
+// ─── Toast ────────────────────────────────────────────────────────────────────
 function mostrarToast(msg, tipo = "sucesso") {
     const toast = document.getElementById("toast");
     if (!toast) return;
-    
-    toast.textContent = msg;
-    toast.className   = `toast ${tipo}`;
+    toast.textContent   = msg;
+    toast.className     = `toast ${tipo}`;
     toast.style.display = "block";
-    
-    setTimeout(() => { 
-        toast.style.display = "none"; 
-    }, 4000); // Aumentado para 4s para dar tempo de ler mensagens maiores
+    setTimeout(() => { toast.style.display = "none"; }, 4000);
 }

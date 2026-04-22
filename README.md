@@ -1,178 +1,215 @@
 # BiblioTech – Sistema de Gerenciamento de Biblioteca
 
-Sistema desenvolvido para a disciplina de **AEDS III**, com foco na construção de um motor de banco de dados próprio, utilizando persistência em arquivos binários e técnicas avançadas de indexação e compressão.
+Sistema desenvolvido para a disciplina de **AEDS III** com foco na construção de um motor de banco de dados próprio, utilizando persistência em arquivos binários e técnicas avançadas de indexação.
 
 ---
 
-##  Integrantes do Grupo
+## Integrantes do Grupo
 
-- Matheus Mendes Ramos  
-- David Cristhian Vieira Fonseca  
-- Letícia Beatriz da Silva Lopes  
-- Igor Patrick Freitas da Silva  
-
----
-
-##  1. Descrição do Problema
-
-Bibliotecas comunitárias e pequenas livrarias necessitam de um sistema robusto para gerenciar:
-
--  Acervo de livros  
--  Autores  
--  Usuários  
--  Empréstimos  
-
-Sem depender de servidores de banco de dados tradicionais.
-
-O sistema realiza a persistência diretamente em **memória secundária**, utilizando arquivos binários e estruturas de indexação próprias.
+| Nome |
+|--- |
+| Matheus Mendes Ramos
+| David Cristhian Vieira Fonseca 
+| Letícia Beatriz da Silva Lopes
+| Igor Patrick Freitas da Silva
 
 ---
 
-##  2. Objetivo do Projeto
+## Tecnologias
 
-- Desenvolver um **motor de banco de dados próprio** com operações CRUD.
-- Implementar:
-  -  Árvore B+
-  -  Hash Extensível
-  -  Criptografia XOR
-  -  Compactação Huffman/LZW
-- Garantir integridade e eficiência na manipulação de dados em arquivos `.dat` ou `.bin`.
+- Java 17+
+- Spring Boot 3 (Spring Web / Tomcat embutido)
+- HTML + CSS + JavaScript (front-end)
+- Arquivos binários `.dat` e `.hash` (persistência própria, sem banco de dados externo)
 
 ---
 
-##  3. Requisitos Funcionais
+## Pré-requisitos
 
-###  RF01 – Cadastro de Livro
-- Título (String)
-- Preço (Real)
-- Data de publicação (Data)
-- Tags/Gêneros (Lista multivalorada)
+- **JDK 17** ou superior instalado e no `PATH`
+- **Maven 3.8+** (ou usar o wrapper `mvnw` incluído no projeto)
+- Nenhuma instalação de banco de dados necessária
 
-###  RF02 – Gerenciamento de Autores
-- Cadastro e associação 1:N com livros
-
-###  RF03 – Gerenciamento de Empréstimos
-- Relacionamento N:N entre Usuários e Livros
-- Controle de datas e devoluções
-
-###  RF04 – Pesquisa Avançada
-- Busca textual utilizando:
-  - KMP
-  - Boyer-Moore
-
-###  RF05 – Autenticação
-- Login de administrador
-- Senha protegida com criptografia XOR
-
-###  RF06 – Manutenção de Espaço
-- Compactação e descompactação para backup
-
-###  RF07 – Listagem Ordenada
-- Exibição de livros por:
-  - Título
-  - Data
-- Utilizando Árvore B+
-
----
-
-##  4. Requisitos Não Funcionais
-
-- Interface gráfica obrigatória (Web ou Desktop)
-- Persistência direta em arquivos binários
-- Exclusão lógica com uso de lápide
-- Uso de cabeçalho nos arquivos para controle de metadados
-
----
-
-##  5. Atores do Sistema
-
-###  Bibliotecário (Admin)
-- Gerencia livros, autores e usuários
-- Realiza empréstimos
-
-###  Leitor
-- Consulta disponibilidade
-- Realiza buscas textuais
-
----
-
-##  6. Modelagem (DER – Lógico)
-
-Relacionamentos principais:
-
-- Autor (1) — (N) Livro  
-- Livro (1) — (N) Empréstimo  
-- Usuário (1) — (N) Empréstimo  
-- Relação N:N via tabela intermediária `Item_Emprestimo`
-
-### Atributos obrigatórios:
-- Data (Publicação/Devolução)
-- Real (Preço/Multa)
-- String multivalorada (Gêneros/Telefones)
-
----
-
-## 7. Arquitetura
-
-O sistema segue o padrão:
-
-###  MVC + DAO
-
-- **View** → Interface gráfica (HTML/CSS/JS ou Java Swing/JavaFX)  
-- **Controller** → Regras de negócio  
-- **Model** → `Livro`, `Autor`, `Usuario`, `Emprestimo`  
-- **DAO** → Manipulação de arquivos binários, controle de offsets e indexação  
-
-Responsabilidades da camada DAO:
-
-- Abertura e manipulação de arquivos
-- Controle de cabeçalho
-- Exclusão lógica (lápide)
-- Gerenciamento da Árvore B+ e Hash Extensível
-
----
-
-## Persistência de Dados
-
-- Arquivos `.dat` ou `.bin`
-- Controle de metadados via cabeçalho
-- Uso de ponteiros (offset)
-- Exclusão lógica
-- Estruturas auxiliares de indexação
-
----
-
-## Tecnologias Utilizadas
-
-- Java  
-- Estruturas de Dados Avançadas  
-- Manipulação de Arquivos Binários  
-- Algoritmos de Busca Textual  
-- Compressão de Dados  
-
----
-
-## Como Executar
-
-1. Clone o repositório:
+Verificar versões:
 
 ```bash
-git clone <url-do-repositorio>
+java -version
+mvn -version
 ```
----
-## 📌Considerações Finais
-
-O BiblioTech foi desenvolvido com foco em:
-
-- Implementação prática de estruturas de dados
-
-- Manipulação de arquivos em baixo nível
-
-- Construção de um mini SGBD
-
-- Aplicação de conceitos avançados vistos na disciplina
 
 ---
-## 📄Licença
 
-Projeto acadêmico desenvolvido para fins educacionais.
+## Estrutura do Projeto
+
+```
+bibliotech/
+├── src/
+│   └── main/
+│       ├── java/com/bibliotech/
+│       │   ├── BibliotechApplication.java   ← ponto de entrada Spring Boot
+│       │   ├── controller/                  ← endpoints REST
+│       │   ├── dao/                         ← persistência em arquivos binários
+│       │   │   ├── HashExtensivel.java
+│       │   │   ├── AutorDAO.java
+│       │   │   ├── LivroDAO.java
+│       │   │   ├── UsuarioDAO.java
+│       │   │   └── EmprestimoDAO.java
+│       │   └── model/                       ← entidades
+│       └── resources/
+│           ├── application.properties
+│           └── static/                      ← front-end (HTML/CSS/JS)
+├── data/                                    ← criado automaticamente na primeira execução
+│   ├── autores.dat
+│   ├── livros.dat
+│   ├── usuarios.dat
+│   ├── emprestimos.dat
+│   ├── diretorios/   ← arquivos de diretório da Hash Extensível
+│   └── buckets/      ← arquivos de bucket da Hash Extensível
+├── pom.xml
+└── README.md
+```
+
+> A pasta `data/` é criada automaticamente ao iniciar a aplicação. Não é necessário criá-la manualmente.
+
+---
+
+## Como Compilar e Executar
+
+Pela IDE (IntelliJ / Eclipse / VS Code)
+
+1. Abrir o projeto como projeto Maven
+2. Localizar a classe `BibliotechApplication.java`
+3. Clicar com o botão direito → **Run as Java Application** (ou usar o botão ▶ da IDE)
+
+---
+
+## Acessando o Sistema
+
+Após iniciar, a aplicação estará disponível em:
+
+```
+http://localhost:8080
+```
+
+Realizar Cadastro caso seja o primeiro acesso
+
+---
+
+O front-end é servido automaticamente pela pasta `src/main/resources/static/`.
+Na **primeira execução**, um usuário administrador padrão é criado automaticamente:
+ 
+| Campo | Valor |
+|---|---|
+| E-mail | `admin@bibliotech.com` |
+| Senha | `admin@#$` |
+ 
+---
+
+## Endpoints da API REST
+
+Todos os endpoints têm prefixo `/api`.
+
+### Usuários — `/api/usuarios`
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `GET` | `/api/usuarios` | Lista todos os usuários |
+| `GET` | `/api/usuarios/{id}` | Busca usuário por ID |
+| `POST` | `/api/usuarios` | Cria novo usuário (admin) |
+| `POST` | `/api/usuarios/cadastrar` | Auto-cadastro (tipo Standard) |
+| `POST` | `/api/usuarios/login` | Autenticação |
+| `PUT` | `/api/usuarios/{id}` | Atualiza usuário |
+| `DELETE` | `/api/usuarios/{id}` | Remove usuário |
+
+### Autores — `/api/autores`
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `GET` | `/api/autores` | Lista todos os autores |
+| `GET` | `/api/autores/{id}` | Busca autor por ID |
+| `POST` | `/api/autores` | Cria novo autor |
+| `PUT` | `/api/autores/{id}` | Atualiza autor |
+| `DELETE` | `/api/autores/{id}` | Remove autor |
+
+### Livros — `/api/livros`
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `GET` | `/api/livros` | Lista todos os livros |
+| `GET` | `/api/livros/{id}` | Busca livro por ID |
+| `GET` | `/api/livros/autor/{idAutor}` | Lista livros de um autor (índice 1:N) |
+| `POST` | `/api/livros` | Cria novo livro |
+| `PUT` | `/api/livros/{id}` | Atualiza livro |
+| `DELETE` | `/api/livros/{id}` | Remove livro |
+
+### Empréstimos — `/api/emprestimos`
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `GET` | `/api/emprestimos` | Lista todos os empréstimos |
+| `GET` | `/api/emprestimos/{id}` | Busca empréstimo por ID |
+| `GET` | `/api/emprestimos/usuario/{id}` | Empréstimos de um usuário (índice 1:N) |
+| `GET` | `/api/emprestimos/livro/{id}` | Empréstimos de um livro (índice 1:N) |
+| `POST` | `/api/emprestimos` | Registra novo empréstimo |
+| `PUT` | `/api/emprestimos/{id}` | Atualiza empréstimo (ex: devolução) |
+| `DELETE` | `/api/emprestimos/{id}` | Remove empréstimo |
+
+---
+
+## Arquitetura de Persistência
+
+### Arquivos de dados (`.dat`)
+
+Cada entidade possui um arquivo `.dat` com a seguinte estrutura:
+
+```
+[ cabeçalho: 8 bytes ]
+  └── ultimoID (int, 4 bytes)
+  └── quantidade (int, 4 bytes)
+
+[ registros sequenciais ]
+  └── ativo (boolean, 1 byte)   ← lápide: false = excluído logicamente
+  └── tamanho (int, 4 bytes)    ← tamanho do payload em bytes
+  └── dados (byte[tamanho])     ← objeto serializado via DataOutputStream
+```
+
+### Índices — Hash Extensível
+
+Cada DAO mantém índices em disco na pasta `data/diretorios/` e `data/buckets/`:
+
+| Arquivo | Tipo | Mapeamento |
+|---|---|---|
+| `autores_*.hash` | PK | `idAutor → posição no .dat` |
+| `livros_*.hash` | PK | `idLivro → posição no .dat` |
+| `autorlivros_*.hash` | 1:N | `idAutor → [posições de livros]` |
+| `usuarios_*.hash` | PK | `idUsuario → posição no .dat` |
+| `emprestimos_*.hash` | PK | `idEmprestimo → posição no .dat` |
+| `emp_usuario_*.hash` | 1:N | `idUsuario → [posições de empréstimos]` |
+| `emp_livro_*.hash` | 1:N | `idLivro → [posições de empréstimos]` |
+
+### Acesso ao relacionamento 1:N
+
+```
+buscarLivrosPorAutor(idAutor):
+  1. hashAutorLivros.buscarLista(idAutor) → [pos1, pos2, pos3]
+  2. Para cada posição → arquivo.seek(pos) → lê registro diretamente
+  Complexidade: O(k), k = número de livros do autor. Sem varredura linear.
+```
+
+### Reconstrução automática de índices
+
+Se os arquivos `.hash` estiverem ausentes ou incompatíveis (ex: após alterar `TAM_BUCKET`), os índices são reconstruídos automaticamente na inicialização percorrendo o `.dat` do início ao fim.
+
+---
+
+## Segurança
+
+- Senhas armazenadas com **criptografia XOR** 
+- O DAO sempre grava senha criptografada e retorna senha descriptografada
+- Senhas nunca são expostas nos endpoints de listagem (`setSenha(null)` antes de serializar)
+
+---
+
+## Licença
+
+Projeto acadêmico desenvolvido para fins educacionais — AEDS III, PUC Minas.
