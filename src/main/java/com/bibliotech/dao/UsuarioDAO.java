@@ -1,217 +1,396 @@
 package com.bibliotech.dao;
+
 import com.bibliotech.model.Usuario;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+
 public class UsuarioDAO {
 
-    private RandomAccessFile arquivo;
-    private final String CHAVE_XOR = "pucminas"; // Chave para criptografia
+    private final RandomAccessFile arquivo;
+    private HashExtensivel hash;
+    private final String CHAVE_XOR = "pucminas";
 
-    public UsuarioDAO() throws IOException{
+    private final Object lock = new Object();
+
+    public UsuarioDAO() throws IOException {
+
+        new File("data").mkdirs();
+        new File("data/diretorios").mkdirs();
+        new File("data/buckets").mkdirs();
 
         arquivo = new RandomAccessFile("data/usuarios.dat", "rw");
 
-        // Se não possuir metadados, cabeçalho vazio
-        if(arquivo.length() == 0){
-            // Inicializa cabeçalho (8 bytes) [cite: 57]
-            arquivo.writeInt(0); //UltimoId
-			arquivo.writeInt(0); // quantidadeRegistros
+        if (arquivo.length() == 0) {
+            arquivo.writeInt(0);
+            arquivo.writeInt(0);
+        }
 
-            // Cria o primeiro usuário ADM automaticamente
-            Usuario adminInicial = Usuario.criarAdminPadrao();
-            this.create(adminInicial);
-            // Note: o create já incrementa o cabeçalho para 1
+        hash = new HashExtensivel("usuarios");
+
+        try {
+            reconstruirHash();
+        } catch (Exception e) {
+            System.out.println("[UsuarioDAO] .dat corrompido — resetando...");
+            resetarDat();
+            reconstruirHash();
+        }
+
+        if (datVazio()) {
+            Usuario admin = Usuario.criarAdminPadrao();
+            create(admin);
+            System.out.println("[UsuarioDAO] Admin padrão criado.");
         }
     }
 
-    // Método auxiliar para criptografia XOR 
-    private String aplicarXOR(String senha) {
-        StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < senha.length(); i++) {
-            sb.append((char) (senha.charAt(i) ^ CHAVE_XOR.charAt(i % CHAVE_XOR.length())));
-        }
-        return sb.toString();
+
+    // CRIPTOGRAFIA XOR + Base64
+    // XOR puro pode gerar bytes nulos ou de controle que corrompem o writeUTF.
+    // Encapsular em Base64 garante que a string gravada é sempre ASCII segura.
+
+    private String criptografar(String senha) {
+        byte[] bytes = senha.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] chave = CHAVE_XOR.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        for (int i = 0; i < bytes.length; i++)
+            bytes[i] ^= chave[i % chave.length];
+        return Base64.getEncoder().encodeToString(bytes);
     }
 
+    private String descriptografar(String senhaCriptografada) {
+        byte[] bytes = Base64.getDecoder().decode(senhaCriptografada);
+        byte[] chave = CHAVE_XOR.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        for (int i = 0; i < bytes.length; i++)
+            bytes[i] ^= chave[i % chave.length];
+        return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+ 
+    // HELPER — lê um registro de forma segura; retorna null se truncado
+    private byte[] lerRegistroSeguro(int tamanho) {
+        try {
+            long restante = arquivo.length() - arquivo.getFilePointer();
+            if (tamanho < 0 || tamanho > restante) {
+                System.out.println("[UsuarioDAO] Registro truncado detectado em pos "
+                    + arquivo.getFilePointer() + " (tamanho=" + tamanho
+                    + ", restante=" + restante + "). Ignorando restante do arquivo.");
+                return null;
+            }
+            byte[] dados = new byte[tamanho];
+            arquivo.readFully(dados);
+            return dados;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+
+    // CREATE
     public int create(Usuario usuario) throws IOException {
-        arquivo.seek(0);
-        int ultimoID = arquivo.readInt();
-        int quantidade = arquivo.readInt();
-        
-        ultimoID++;
-        quantidade++;
-        usuario.setId(ultimoID);
+        synchronized (lock) {
+            arquivo.seek(0);
+            int ultimoID   = arquivo.readInt();
+            int quantidade = arquivo.readInt();
 
-        // Aplica criptografia na senha antes de salvar [cite: 52]
-        usuario.setSenha(aplicarXOR(usuario.getSenha()));
-        
-        arquivo.seek(arquivo.length());
-        byte[] dados = usuario.toByteArray();
-        
-        arquivo.writeBoolean(true);  // Lápide ativa [cite: 57]
-        arquivo.writeInt(dados.length);
-        arquivo.write(dados);
-        
-        // Atualiza cabeçalho [cite: 57]
-        arquivo.seek(0);
-        arquivo.writeInt(ultimoID);
-        arquivo.writeInt(quantidade);
-        
-        return usuario.getId();
+            ultimoID++;
+            quantidade++;
+            usuario.setId(ultimoID);
+
+            if (hash.buscar(usuario.getId()) != -1)
+                throw new IllegalArgumentException(
+                    "PK duplicada: já existe usuário com id=" + usuario.getId());
+
+            String senhaOriginal = usuario.getSenha();
+            usuario.setSenha(criptografar(senhaOriginal));
+
+            long   pos   = arquivo.length();
+            byte[] dados = usuario.toByteArray();
+
+            arquivo.seek(pos);
+            arquivo.writeBoolean(true);
+            arquivo.writeInt(dados.length);
+            arquivo.write(dados);
+
+            hash.inserir(usuario.getId(), pos);
+
+            arquivo.seek(0);
+            arquivo.writeInt(ultimoID);
+            arquivo.writeInt(quantidade);
+
+            usuario.setSenha(senhaOriginal);
+            return usuario.getId();
+        }
     }
 
-    // Retorna uma lista para o Front-end
+  
+    // READ
+    public Usuario read(int id) throws IOException {
+        synchronized (lock) {
+            long pos = hash.buscar(id);
+            if (pos == -1) return null;
+
+            arquivo.seek(pos);
+            boolean ativo   = arquivo.readBoolean();
+            int     tamanho = arquivo.readInt();
+            if (!ativo) return null;
+
+            byte[] dados = lerRegistroSeguro(tamanho);
+            if (dados == null) return null;
+
+            Usuario u = new Usuario();
+            u.fromByteArray(dados);
+            u.setSenha(descriptografar(u.getSenha()));
+            return u;
+        }
+    }
+
+    // LIST ALL
     public List<Usuario> listAll() throws IOException {
-        List<Usuario> usuarios = new ArrayList<>();
-        arquivo.seek(8); // Pula cabeçalho
+        synchronized (lock) {
+            List<Usuario> usuarios = new ArrayList<>();
+            arquivo.seek(8);
 
-        while (arquivo.getFilePointer() < arquivo.length()) {
+            while (arquivo.getFilePointer() < arquivo.length()) {
+                long restante = arquivo.length() - arquivo.getFilePointer();
+                if (restante < 5) {
+                    System.out.println("[UsuarioDAO] listAll: cabeçalho truncado no fim do arquivo ("
+                        + restante + " bytes). Interrompendo leitura.");
+                    break;
+                }
+
+                boolean ativo   = arquivo.readBoolean();
+                int     tamanho = arquivo.readInt();
+
+                if (ativo) {
+                    byte[] dados = lerRegistroSeguro(tamanho);
+                    if (dados == null) break;
+
+                    try {
+                        Usuario u = new Usuario();
+                        u.fromByteArray(dados);
+                        u.setSenha(descriptografar(u.getSenha()));
+                        usuarios.add(u);
+                    } catch (Exception e) {
+                        System.out.println("[UsuarioDAO] listAll: erro ao desserializar registro. Ignorando.");
+                    }
+                } else {
+                    long restanteParaPular = arquivo.length() - arquivo.getFilePointer();
+                    if (tamanho < 0 || tamanho > restanteParaPular) {
+                        System.out.println("[UsuarioDAO] listAll: skipBytes inválido ("
+                            + tamanho + "). Interrompendo leitura.");
+                        break;
+                    }
+                    arquivo.skipBytes(tamanho);
+                }
+            }
+            return usuarios;
+        }
+    }
+
+
+    // UPDATE
+    public boolean update(Usuario novoUsuario) throws IOException {
+        synchronized (lock) {
+
+            long pos = hash.buscar(novoUsuario.getId());
+
+            if (pos == -1)
+                return false;
+
+            arquivo.seek(pos);
+
             boolean ativo = arquivo.readBoolean();
-            int tamanho = arquivo.readInt();
+            int tamanhoAntigo = arquivo.readInt();
 
-            if (ativo) {
-                byte[] dados = new byte[tamanho];
-                arquivo.readFully(dados);
-                Usuario u = new Usuario();
-                u.fromByteArray(dados);
-                usuarios.add(u);
-            } else {
-                arquivo.skipBytes(tamanho);
+            if (!ativo)
+                return false;
+
+            String senhaOriginal = novoUsuario.getSenha();
+            novoUsuario.setSenha(criptografar(senhaOriginal));
+
+            byte[] novosDados = novoUsuario.toByteArray();
+
+        
+            // cabe no espaço antigo
+            if (novosDados.length <= tamanhoAntigo) {
+
+                // mantém tamanho antigo para evitar lixo/truncamento
+                arquivo.seek(pos + 5); // começa após lapide + tamanho
+                arquivo.write(novosDados);
+
+                // preenche sobra com zeros
+                for(int i=novosDados.length; i<tamanhoAntigo; i++){
+                    arquivo.writeByte(0);
+                }
+
             }
+            else {
+
+                // exclusão lógica do antigo
+                arquivo.seek(pos);
+                arquivo.writeBoolean(false);
+
+                long novaPos = arquivo.length();
+
+                arquivo.seek(novaPos);
+
+                arquivo.writeBoolean(true);
+                arquivo.writeInt(novosDados.length);
+                arquivo.write(novosDados);
+
+                hash.remover(novoUsuario.getId());
+                hash.inserir(novoUsuario.getId(), novaPos);
+            }
+
+            novoUsuario.setSenha(senhaOriginal);
+
+            return true;
         }
-        return usuarios;
     }
 
-    // Método para listar os usuários diretamente no terminal (Fase 1)
-    public void listar() throws IOException {
-        System.out.println("\n--- LISTA DE USUÁRIOS NO ARQUIVO BINÁRIO ---");
-        
-        // Reutilizamos o listAll para pegar todos os registros ativos
-        List<Usuario> usuarios = this.listAll();
-        
-        if (usuarios.isEmpty()) {
-            System.out.println("Nenhum usuário cadastrado.");
-        } else {
-            for (Usuario u : usuarios) {
-                System.out.println("ID: " + u.getId() + 
-                                   " | Nome: " + u.getNome() + 
-                                   " | Email: " + u.getEmail() + 
-                                   " | Tipo: " + u.getTipo() + 
-                                   " | Senha(XOR): " + u.getSenha());
-            }
-        }
-        System.out.println("-------------------------------------------\n");
-    }
 
+    // DELETE
     public boolean delete(int id) throws IOException {
-		arquivo.seek(8); // Pula o cabeçalho (2 ints)
-		
-		while (arquivo.getFilePointer() < arquivo.length()) {
-			long enderecoRegistro = arquivo.getFilePointer();
-			boolean ativo = arquivo.readBoolean();
-			int tamanho = arquivo.readInt();
-			
-			if (ativo) {
-				int idAtual = arquivo.readInt();
-				if (idAtual == id) {
-					arquivo.seek(enderecoRegistro); // Volta para o início do registro
-					arquivo.writeBoolean(false);    // "Lápide": registro agora é inválido
-					return true;
-				}
-				arquivo.skipBytes(tamanho - 4); // Pula o resto do registro (já lemos o ID de 4 bytes)
-			} else {
-				arquivo.skipBytes(tamanho); // Pula registro já excluído
-			}
-		}
-		return false;
-	}
+        synchronized (lock) {
+            long pos = hash.buscar(id);
+            if (pos == -1) return false;
 
-	public boolean update(Usuario novoUsuario) throws IOException {
-		arquivo.seek(8);
-		
-		while (arquivo.getFilePointer() < arquivo.length()) {
-			long enderecoRegistro = arquivo.getFilePointer();
-			boolean ativo = arquivo.readBoolean();
-			int tamanhoAntigo = arquivo.readInt();
-			long enderecoDados = arquivo.getFilePointer();
-			
-			int idAtual = arquivo.readInt();
-			
-			if (ativo && idAtual == novoUsuario.getId()) {
-                // Garante que a nova senha também seja criptografada antes de atualizar
-                novoUsuario.setSenha(aplicarXOR(novoUsuario.getSenha()));
-                
-				byte[] novosDados = novoUsuario.toByteArray();
-				
-				if (novosDados.length <= tamanhoAntigo) {
-					// Cabe no mesmo lugar!
-					arquivo.seek(enderecoDados);
-					arquivo.write(novosDados);
-				} else {
-					// Não cabe. Exclui o antigo e cria um novo no fim.
-					arquivo.seek(enderecoRegistro);
-					arquivo.writeBoolean(false);
-					
-					arquivo.seek(arquivo.length());
-					arquivo.writeBoolean(true);
-					arquivo.writeInt(novosDados.length);
-					arquivo.write(novosDados);
-				}
-				return true;
-			}
-			arquivo.skipBytes(tamanhoAntigo - 4);
-		}
-		return false;
-	}
-	
-	public Usuario read(int id) throws IOException {
-	    arquivo.seek(8);
+            arquivo.seek(pos);
+            boolean ativo = arquivo.readBoolean();
+            if (!ativo) return false;
 
-	    while (arquivo.getFilePointer() < arquivo.length()) {
-	        boolean ativo = arquivo.readBoolean();
-	        int tamanho = arquivo.readInt();
+            arquivo.seek(pos);
+            arquivo.writeBoolean(false);
+            hash.remover(id);
+            return true;
+        }
+    }
 
-	        byte[] dados = new byte[tamanho];
-	        arquivo.readFully(dados);
-
-	        if (ativo) {
-	            Usuario u = new Usuario();
-	            u.fromByteArray(dados);
-
-	            if (u.getId() == id) {
-	                return u;
-	            }
-	        }
-	    }
-	    return null;
-	}
 
     // LOGIN
     public Usuario login(String email, String senha) throws IOException {
-        arquivo.seek(8); // Pula o cabeçalho
+        synchronized (lock) {
+            String senhaCriptografada = criptografar(senha);
 
+            arquivo.seek(8);
+            while (arquivo.getFilePointer() < arquivo.length()) {
+                long restante = arquivo.length() - arquivo.getFilePointer();
+                if (restante < 5) break;
+
+                boolean ativo   = arquivo.readBoolean();
+                int     tamanho = arquivo.readInt();
+
+                byte[] dados = lerRegistroSeguro(tamanho);
+                if (dados == null) break;
+
+                if (ativo) {
+                    try {
+                        Usuario u = new Usuario();
+                        u.fromByteArray(dados);
+
+                        if (u.getEmail().equals(email) &&
+                            u.getSenha().equals(senhaCriptografada)) {
+                            u.setSenha(senha);
+                            return u;
+                        }
+                    } catch (Exception e) {
+                        System.out.println("[UsuarioDAO] login: erro ao desserializar registro. Ignorando.");
+                    }
+                }
+            }
+            return null;
+        }
+    }
+
+  
+    // LISTAR NO TERMINAL
+    public void listar() throws IOException {
+        System.out.println("\n--- LISTA DE USUÁRIOS ---");
+        List<Usuario> usuarios = listAll();
+        if (usuarios.isEmpty()) {
+            System.out.println("Nenhum usuário cadastrado.");
+        } else {
+            for (Usuario u : usuarios)
+                System.out.println("ID: " + u.getId()
+                    + " | Nome: "  + u.getNome()
+                    + " | Email: " + u.getEmail()
+                    + " | Tipo: "  + u.getTipo());
+        }
+        System.out.println("-------------------------\n");
+    }
+
+ 
+    // RECONSTRUIR HASH
+    public void reconstruirHash() throws IOException {
+        zerarArquivo("data/diretorios/usuarios_dir.hash");
+        zerarArquivo("data/buckets/usuarios_bucket.hash");
+
+        hash = new HashExtensivel("usuarios");
+
+        arquivo.seek(8);
         while (arquivo.getFilePointer() < arquivo.length()) {
-            boolean ativo = arquivo.readBoolean();
-            int tamanho = arquivo.readInt();
+            long restante = arquivo.length() - arquivo.getFilePointer();
+            if (restante < 5) break;
 
-            byte[] dados = new byte[tamanho];
-            arquivo.readFully(dados);
+            long    pos   = arquivo.getFilePointer();
+            boolean ativo = arquivo.readBoolean();
+            int     tam   = arquivo.readInt();
+
+            byte[] dados = lerRegistroSeguro(tam);
+            if (dados == null) break;
 
             if (ativo) {
-                Usuario u = new Usuario();
-                u.fromByteArray(dados);
-
-                // Aplica o XOR na senha digitada para comparar com a que está guardada
-                String senhaDigitadaCriptografada = aplicarXOR(senha);
-
-                // Verifica se o email e a senha (ambas criptografadas) coincidem
-                if (u.getEmail().equals(email) && u.getSenha().equals(senhaDigitadaCriptografada)) {
-                    return u; // Login válido! Retorna o utilizador.
+                try {
+                    Usuario u = new Usuario();
+                    u.fromByteArray(dados);
+                    hash.inserir(u.getId(), pos);
+                } catch (Exception e) {
+                    System.out.println("[UsuarioDAO] reconstruirHash: registro inválido ignorado.");
                 }
             }
         }
-        return null; // Credenciais inválidas ou utilizador inativo
+        System.out.println("[UsuarioDAO] Hash reconstruído com sucesso.");
+    }
+
+
+    // HELPERS PRIVADOS
+    private boolean datVazio() throws IOException {
+        arquivo.seek(8);
+        while (arquivo.getFilePointer() < arquivo.length()) {
+            long restante = arquivo.length() - arquivo.getFilePointer();
+            if (restante < 5) break;
+
+            boolean ativo = arquivo.readBoolean();
+            int     tam   = arquivo.readInt();
+            if (ativo) return false;
+
+            long restanteParaPular = arquivo.length() - arquivo.getFilePointer();
+            if (tam < 0 || tam > restanteParaPular) break;
+            arquivo.skipBytes(tam);
+        }
+        return true;
+    }
+
+    private void resetarDat() throws IOException {
+        arquivo.setLength(0);
+        arquivo.seek(0);
+        arquivo.writeInt(0);
+        arquivo.writeInt(0);
+        zerarArquivo("data/diretorios/usuarios_dir.hash");
+        zerarArquivo("data/buckets/usuarios_bucket.hash");
+        hash = new HashExtensivel("usuarios");
+        System.out.println("[UsuarioDAO] Arquivos resetados com sucesso.");
+    }
+
+    private void zerarArquivo(String caminho) throws IOException {
+        try (RandomAccessFile f = new RandomAccessFile(caminho, "rw")) {
+            f.setLength(0);
+        }
+    }
+
+    public void fechar() throws IOException {
+        arquivo.close();
+        hash.fechar();
     }
 }
