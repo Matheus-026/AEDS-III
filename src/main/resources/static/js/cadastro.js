@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (response.ok) {
                 alert('Cadastro realizado com sucesso! Faça login.');
-                window.location.href = 'login.html';
+                window.location.href = '/login';
             } else {
                 alert('Erro ao realizar o cadastro.');
             }
