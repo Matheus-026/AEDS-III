@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.List;
 
-public class TesteUsuarioDAO {
+public class Testeusuariodao {
 
     public static void main(String[] args) throws Exception {
 
