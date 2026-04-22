@@ -44,11 +44,10 @@ public class UsuarioDAO {
         }
     }
 
-    // -------------------------------------------------------------------------
+  
     // CRIPTOGRAFIA XOR + Base64
     // XOR puro pode gerar bytes nulos que corrompem o writeUTF.
     // Base64 garante que a string gravada é sempre ASCII segura.
-    // -------------------------------------------------------------------------
     private String criptografar(String senha) {
         byte[] bytes = senha.getBytes(java.nio.charset.StandardCharsets.UTF_8);
         byte[] chave = CHAVE_XOR.getBytes(java.nio.charset.StandardCharsets.UTF_8);
@@ -65,9 +64,8 @@ public class UsuarioDAO {
         return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
     }
 
-    // -------------------------------------------------------------------------
+ 
     // HELPER — lê um registro de forma segura; retorna null se truncado
-    // -------------------------------------------------------------------------
     private byte[] lerRegistroSeguro(int tamanho) {
         try {
             long restante = arquivo.length() - arquivo.getFilePointer();
@@ -85,10 +83,10 @@ public class UsuarioDAO {
         }
     }
 
-    // -------------------------------------------------------------------------
+  
     // CREATE
     // Recebe senha limpa → grava criptografada → restaura limpa em memória.
-    // -------------------------------------------------------------------------
+  
     public int create(Usuario usuario) throws IOException {
         synchronized (lock) {
             arquivo.seek(0);
@@ -125,10 +123,9 @@ public class UsuarioDAO {
         }
     }
 
-    // -------------------------------------------------------------------------
+   
     // READ
     // Retorna senha em texto limpo (descriptografada).
-    // -------------------------------------------------------------------------
     public Usuario read(int id) throws IOException {
         synchronized (lock) {
             long pos = hash.buscar(id);
@@ -149,10 +146,9 @@ public class UsuarioDAO {
         }
     }
 
-    // -------------------------------------------------------------------------
+ 
     // LIST ALL
     // Retorna senhas em texto limpo.
-    // -------------------------------------------------------------------------
     public List<Usuario> listAll() throws IOException {
         synchronized (lock) {
             List<Usuario> usuarios = new ArrayList<>();
@@ -194,17 +190,10 @@ public class UsuarioDAO {
         }
     }
 
-    // -------------------------------------------------------------------------
+   
     // UPDATE
     // Recebe senha em texto limpo (igual ao que read() devolve).
     // Criptografa exatamente uma vez antes de gravar.
-    //
-    // CORREÇÃO DO BUG: o update in-place agora regrava o campo tamanho (4 bytes)
-    // antes dos dados. Sem isso, o tamanho antigo ficava no arquivo enquanto os
-    // dados novos podiam ser menores — na próxima leitura, lerRegistroSeguro()
-    // lia o tamanho antigo (maior), incluía os zeros do padding nos dados, e o
-    // fromByteArray desserializava lixo depois da senha real, corrompendo-a.
-    // -------------------------------------------------------------------------
     public boolean update(Usuario novoUsuario) throws IOException {
         synchronized (lock) {
             long pos = hash.buscar(novoUsuario.getId());
@@ -221,12 +210,9 @@ public class UsuarioDAO {
             byte[] novosDados = novoUsuario.toByteArray();
 
             if (novosDados.length <= tamanhoAntigo) {
-                // ── in-place ──────────────────────────────────────────────────
-                // Regrava o tamanho correto (pos+1 pula o boolean da lápide).
-                // Sem isso o tamanho antigo fica gravado e a próxima leitura
-                // inclui o padding de zeros no byteArray → desserialização lixo.
+               
                 arquivo.seek(pos + 1);
-                arquivo.writeInt(novosDados.length); // <── correção crítica
+                arquivo.writeInt(novosDados.length); 
                 arquivo.write(novosDados);
 
                 // preenche sobra com zeros para não deixar lixo legível
@@ -235,7 +221,7 @@ public class UsuarioDAO {
                     arquivo.writeByte(0);
 
             } else {
-                // ── move para o fim ───────────────────────────────────────────
+                // ── move para o fim 
                 arquivo.seek(pos);
                 arquivo.writeBoolean(false);
 
@@ -254,9 +240,8 @@ public class UsuarioDAO {
         }
     }
 
-    // -------------------------------------------------------------------------
+  
     // DELETE
-    // -------------------------------------------------------------------------
     public boolean delete(int id) throws IOException {
         synchronized (lock) {
             long pos = hash.buscar(id);
@@ -273,10 +258,8 @@ public class UsuarioDAO {
         }
     }
 
-    // -------------------------------------------------------------------------
     // LOGIN
     // Retorna o usuário com senha em texto limpo, ou null se não encontrado.
-    // -------------------------------------------------------------------------
     public Usuario login(String email, String senha) throws IOException {
         synchronized (lock) {
             String senhaCriptografada = criptografar(senha);
@@ -311,9 +294,8 @@ public class UsuarioDAO {
         }
     }
 
-    // -------------------------------------------------------------------------
+   
     // LISTAR NO TERMINAL
-    // -------------------------------------------------------------------------
     public void listar() throws IOException {
         System.out.println("\n--- LISTA DE USUÁRIOS ---");
         List<Usuario> usuarios = listAll();
@@ -329,9 +311,7 @@ public class UsuarioDAO {
         System.out.println("-------------------------\n");
     }
 
-    // -------------------------------------------------------------------------
     // RECONSTRUIR HASH
-    // -------------------------------------------------------------------------
     public void reconstruirHash() throws IOException {
         zerarArquivo("data/diretorios/usuarios_dir.hash");
         zerarArquivo("data/buckets/usuarios_bucket.hash");
@@ -363,9 +343,8 @@ public class UsuarioDAO {
         System.out.println("[UsuarioDAO] Hash reconstruído com sucesso.");
     }
 
-    // -------------------------------------------------------------------------
+    
     // HELPERS PRIVADOS
-    // -------------------------------------------------------------------------
     private boolean datVazio() throws IOException {
         arquivo.seek(8);
         while (arquivo.getFilePointer() < arquivo.length()) {
