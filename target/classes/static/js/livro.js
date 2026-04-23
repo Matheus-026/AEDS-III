@@ -521,7 +521,7 @@ document.getElementById("buscar").addEventListener("input", async (e) => {
 });
 
 // ==========================================
-// ORDENAÇÃO EXTERNA (GATILHO DO SELECT)
+// ORDENAÇÃO EXTERNA
 // ==========================================
 document.getElementById('ordenar').addEventListener('change', async function() {
     

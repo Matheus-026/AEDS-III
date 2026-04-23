@@ -11,8 +11,6 @@ import java.util.List;
 public class OrdenacaoExternaLivros {
 
     private final String ARQUIVO_PRINCIPAL = "data/livros.dat";
-    // Simulando uma memória RAM muito pequena (cabe apenas 10 livros por vez)
-    // Isso é ideal para o professor ver os blocos sendo formados no seu vídeo demonstrativo!
     private final int TAMANHO_MEMORIA_RAM = 10; 
 
     public void ordenarPorPreco() throws Exception {
@@ -232,8 +230,8 @@ public class OrdenacaoExternaLivros {
         arqOriginal.close();
         arqOrdenado.close();
         
-        // DICA DE OURO: Como mudamos os livros de lugar físico, a tabela Hash antiga não serve mais!
-        // Deletamos os arquivos da Hash. Quando o Spring Boot ligar, o seu LivroDAO vai perceber 
+        //Como mudamos os livros de lugar físico, a tabela Hash antiga não serve mais!
+        // Deletamos os arquivos da Hash. Quando o Spring Boot ligar, o LivroDAO vai perceber 
         // que eles sumiram e vai chamar a função reconstruirHash() automaticamente!
         new File("data/diretorios/livros_dir.hash").delete();
         new File("data/buckets/livros_bucket.hash").delete();
