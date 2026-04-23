@@ -2,7 +2,11 @@ package com.bibliotech.controller;
 
 import com.bibliotech.dao.LivroDAO;
 import com.bibliotech.model.Livro;
+import com.bibliotech.service.OrdenacaoExternaLivros;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -11,9 +15,12 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/livros")
-@CrossOrigin
+@CrossOrigin(origins = "*")
 public class LivroController {
-
+    
+    @Autowired
+    private OrdenacaoExternaLivros ordenacaoService;
+    
     private LivroDAO livroDAO;
 
     public LivroController() throws IOException {
@@ -153,5 +160,20 @@ public class LivroController {
         }
 
         return Map.of("ok", true);
+    }
+
+    // =========================
+    // ORDENAÇÃO
+    // =========================
+    @PostMapping("/ordenar")
+    public ResponseEntity<String> ordenarLivros() {
+        try {
+            ordenacaoService.ordenarPorPreco();
+            return ResponseEntity.ok("Livros ordenados com sucesso por preço!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body("Erro ao processar ordenação externa.");
+        }
     }
 }

@@ -520,4 +520,43 @@ document.getElementById("buscar").addEventListener("input", async (e) => {
     }
 });
 
+// ==========================================
+// ORDENAÇÃO EXTERNA
+// ==========================================
+document.getElementById('ordenar').addEventListener('change', async function() {
+    
+    // Verifica se a opção escolhida foi o Preço
+    if (this.value === 'preco') {
+        
+        // Bloqueia o select para o utilizador não clicar várias vezes enquanto ordena
+        this.disabled = true; 
+        
+        // Se já tiver uma função de Toast, use-a. Se não, um alert avisa o utilizador.
+        alert("Iniciando a Ordenação Externa em disco... Aguarde.");
+
+        try {
+            // Dispara a requisição POST para a rota que criamos no Controller
+            const response = await fetch('http://localhost:8080/api/livros/ordenar', {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                alert("Sucesso! O ficheiro livros.dat foi ordenado pelo Preço.");
+                
+                // Recarrega a página para o LivroDAO ler o ficheiro na nova ordem
+                window.location.reload(); 
+            } else {
+                alert("Erro no servidor ao tentar ordenar os livros.");
+                this.disabled = false;
+                this.value = ""; // Reseta o select
+            }
+        } catch (error) {
+            console.error("Erro na conexão:", error);
+            alert("Servidor offline ou erro de rede.");
+            this.disabled = false;
+            this.value = "";
+        }
+    }
+});
+
 window.onload = carregarLivros;
