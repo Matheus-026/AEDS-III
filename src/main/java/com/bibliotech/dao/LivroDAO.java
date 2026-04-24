@@ -325,33 +325,6 @@ public class LivroDAO {
             if (ok && (filtrarUsuario || filtrarStatus)) {
                 boolean encontrouVinculoValido = false;
 
-                // Busca todos os empréstimos deste livro usando seu índice secundário
-                // (HashLivro)
-                List<Emprestimo> historico = emprestimoDAO.buscarPorLivro(l.getId());
-
-                for (Emprestimo e : historico) {
-                    // Aqui você pode adicionar: if (e.isDevolvido()) continue;
-                    // para filtrar apenas quem está com o livro AGORA.
-
-                    Usuario u = usuarioDAO.read(e.getIdUsuario()); // Busca no Hash O(1)
-                    if (u != null) {
-                        boolean nomeUBate = !filtrarUsuario
-                                || u.getNome().toLowerCase().contains(usuarioNome.toLowerCase());
-                        boolean statusUBate = !filtrarStatus || u.getStatus().equalsIgnoreCase(usuarioStatus);
-
-                        if (nomeUBate && statusUBate) {
-                            encontrouVinculoValido = true;
-                            break;
-                        }
-                    }
-                }
-                if (!encontrouVinculoValido)
-                    ok = false;
-            }
-
-            // --- 6. ADICIONAR AO RESULTADO ---
-            if (ok) {
-                resultados.add(l);
             }
         }
 

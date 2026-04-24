@@ -6,7 +6,7 @@ const API_USUARIOS = "http://localhost:8080/api/usuarios";
 // caches
 let livrosCache      = [];
 let emprestimosCache = [];
-let usuariosCache = [];
+let usuariosCache    = [];
 
 // ─── Navbar hide on scroll ────────────────────────────────────────────────────
 const navbar = document.querySelector('.navbar');
@@ -27,18 +27,19 @@ let modoEdicao = false;
 let idEditando  = null;
 
 // ─── Elementos de autocomplete ────────────────────────────────────────────────
-const inputUsuario    = document.getElementById("input-usuario-nome");
+const inputUsuario     = document.getElementById("input-usuario-nome");
 const sugestoesUsuario = document.getElementById("lista-usuarios");
 
-const inputLivro    = document.getElementById("input-livro-nome");
+const inputLivro     = document.getElementById("input-livro-nome");
 const sugestoesLivro = document.getElementById("lista-livros");
 
 // ─── Ao carregar a página ─────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
     await Promise.all([carregarLivros(), carregarUsuarios()]);
-    carregarEmprestimos();
+    await carregarEmprestimos();
 
     document.getElementById("search_emprestimo").addEventListener("input", aplicarFiltros);
+    document.getElementById("filtro-status")?.addEventListener("change", aplicarFiltros);
 
     document.getElementById("formEmprestimo").addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -49,16 +50,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
-    document.getElementById("search_emprestimo").addEventListener("input", (e) => {
-        const termo = e.target.value.toLowerCase();
-        const filtrados = emprestimosCache.filter(emp =>
-            (emp.nomeUsuario  || "").toLowerCase().includes(termo) ||
-            (emp.tituloLivro  || "").toLowerCase().includes(termo) ||
-            (emp.status       || "").toLowerCase().includes(termo)
-        );
-        renderizarTabela(filtrados);
-    });
-
     configurarAutocomplete(
         inputUsuario,
         sugestoesUsuario,
@@ -66,16 +57,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         u => u.nome,
         u => u.id
     );
-
-    document.getElementById("search_emprestimo").addEventListener("input", (e) => {
-        const termo = e.target.value.toLowerCase();
-        const filtrados = emprestimosCache.filter(emp =>
-            (emp.nomeUsuario  || "").toLowerCase().includes(termo) ||
-            (emp.tituloLivro  || "").toLowerCase().includes(termo) ||
-            (emp.status       || "").toLowerCase().includes(termo)
-        );
-        renderizarTabela(filtrados);
-    });
 
     configurarAutocomplete(
         inputLivro,
@@ -90,7 +71,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function carregarLivros() {
     try {
         const res = await fetch(API_LIVROS);
-        livrosCache = await res.json();
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        livrosCache = Array.isArray(data) ? data : [];
     } catch (err) {
         console.error("Erro ao carregar livros:", err);
         mostrarToast("Erro ao carregar livros.", "erro");
@@ -100,7 +83,9 @@ async function carregarLivros() {
 async function carregarUsuarios() {
     try {
         const res = await fetch(API_USUARIOS);
-        usuariosCache = await res.json();
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        usuariosCache = Array.isArray(data) ? data : [];
     } catch (err) {
         console.error("Erro ao carregar usuários:", err);
         mostrarToast("Erro ao carregar usuários.", "erro");
@@ -108,8 +93,6 @@ async function carregarUsuarios() {
 }
 
 // ─── Autocomplete genérico ────────────────────────────────────────────────────
-// Funciona para qualquer lista: basta passar o input, o div de sugestões,
-// uma função que retorna o cache, e funções para extrair label e id de cada item.
 function configurarAutocomplete(input, sugestoesDiv, getCache, getLabel, getId) {
     input.addEventListener("input", () => {
         const texto = input.value.toLowerCase().trim();
@@ -138,7 +121,6 @@ function configurarAutocomplete(input, sugestoesDiv, getCache, getLabel, getId) 
         });
     });
 
-    // fecha sugestões ao clicar fora
     document.addEventListener("click", (e) => {
         if (!e.target.closest(`#${input.id}`) &&
             !e.target.closest(`#${sugestoesDiv.id}`)) {
@@ -150,25 +132,51 @@ function configurarAutocomplete(input, sugestoesDiv, getCache, getLabel, getId) 
 // ─── Carregar empréstimos ─────────────────────────────────────────────────────
 async function carregarEmprestimos() {
     try {
-        const res   = await fetch(API_URL);
-        const lista = await res.json();
-        emprestimosCache = lista;
-        renderizarTabela(lista);
+        const res = await fetch(API_URL);
+
+        if (!res.ok) {
+            // tenta extrair mensagem de erro do servidor
+            let msgErro = `Erro do servidor: HTTP ${res.status}`;
+            try {
+                const corpo = await res.json();
+                if (corpo && corpo.erro) msgErro = corpo.erro;
+            } catch (_) { /* ignora parse error */ }
+
+            console.error("Erro ao carregar empréstimos:", msgErro);
+            mostrarToast("Não foi possível carregar os empréstimos: " + msgErro, "erro");
+            renderizarErro(msgErro);
+            return;
+        }
+
+        const data = await res.json();
+
+        if (!Array.isArray(data)) {
+            console.error("Resposta inesperada da API (não é array):", data);
+            mostrarToast("Resposta inválida do servidor.", "erro");
+            renderizarErro("Resposta inválida do servidor.");
+            return;
+        }
+
+        emprestimosCache = data;
+        renderizarTabela(data);
+
     } catch (err) {
         console.error("Erro ao carregar empréstimos:", err);
         mostrarToast("Não foi possível conectar ao servidor.", "erro");
+        renderizarErro("Não foi possível conectar ao servidor.");
     }
 }
 
 // ─── Filtros ──────────────────────────────────────────────────────────────────
 function aplicarFiltros() {
     const termo  = document.getElementById("search_emprestimo").value.toLowerCase();
-    const status = document.getElementById("filtro-status").value;
+    const status = document.getElementById("filtro-status")?.value || "";
 
     const filtrados = emprestimosCache.filter(emp => {
-        const bateTexto = !termo ||
-            emp.nomeUsuario.toLowerCase().includes(termo) ||
-            emp.tituloLivro.toLowerCase().includes(termo);
+        const bateTexto  = !termo ||
+            (emp.nomeUsuario  || "").toLowerCase().includes(termo) ||
+            (emp.tituloLivro  || "").toLowerCase().includes(termo) ||
+            (emp.status       || "").toLowerCase().includes(termo);
         const bateStatus = !status || emp.status === status;
         return bateTexto && bateStatus;
     });
@@ -176,11 +184,12 @@ function aplicarFiltros() {
     renderizarTabela(filtrados);
 }
 
+// ─── Renderizar tabela ────────────────────────────────────────────────────────
 function renderizarTabela(lista) {
     const tbody = document.querySelector("table tbody");
     tbody.innerHTML = "";
 
-    if (lista.length === 0) {
+    if (!Array.isArray(lista) || lista.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#888;padding:20px;">Nenhum empréstimo cadastrado.</td></tr>`;
         return;
     }
@@ -188,11 +197,11 @@ function renderizarTabela(lista) {
     lista.forEach(emp => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td>${emp.nomeUsuario}</td>
-            <td>${emp.tituloLivro}</td>
+            <td>${emp.nomeUsuario  || "-"}</td>
+            <td>${emp.tituloLivro  || "-"}</td>
             <td>${formatarData(emp.dataEmprestimo)}</td>
             <td>${formatarData(emp.dataDevolucao)}</td>
-            <td class="status ${classeStatus(emp.status)}">${emp.status}</td>
+            <td class="status ${classeStatus(emp.status)}">${emp.status || "-"}</td>
             <td class="acoes">
                 <button class="acao-btn" onclick="toggleMenu(this)">⋮</button>
                 <div class="menu-acoes">
@@ -204,6 +213,13 @@ function renderizarTabela(lista) {
         `;
         tbody.appendChild(tr);
     });
+}
+
+function renderizarErro(msg) {
+    const tbody = document.querySelector("table tbody");
+    if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#c0392b;padding:20px;">⚠ ${msg}</td></tr>`;
+    }
 }
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
@@ -241,8 +257,8 @@ async function criarEmprestimo() {
             fecharModal();
             carregarEmprestimos();
         } else {
-            const err = await res.json();
-            mostrarToast("Erro: " + err.erro, "erro");
+            const err = await res.json().catch(() => ({}));
+            mostrarToast("Erro: " + (err.erro || `HTTP ${res.status}`), "erro");
         }
     } catch {
         mostrarToast("Erro ao conectar ao servidor.", "erro");
@@ -254,6 +270,12 @@ async function abrirEdicao(id) {
     fecharMenus();
     try {
         const res = await fetch(`${API_URL}?id=${id}`);
+
+        if (!res.ok) {
+            mostrarToast("Empréstimo não encontrado.", "erro");
+            return;
+        }
+
         const emp = await res.json();
 
         modoEdicao = true;
@@ -262,16 +284,14 @@ async function abrirEdicao(id) {
         document.getElementById("modal-titulo").textContent = "Editar Empréstimo";
         document.getElementById("btn-submit").textContent   = "Salvar";
 
-        // usuário
-        inputUsuario.value      = emp.nomeUsuario;
+        inputUsuario.value      = emp.nomeUsuario || "";
         inputUsuario.dataset.id = emp.idUsuario;
 
-        // livro
-        inputLivro.value      = emp.tituloLivro;
+        inputLivro.value      = emp.tituloLivro || "";
         inputLivro.dataset.id = emp.idLivro;
 
-        document.getElementById("input-data-emp").value = emp.dataEmprestimo;
-        document.getElementById("input-data-dev").value = emp.dataDevolucao;
+        document.getElementById("input-data-emp").value = emp.dataEmprestimo || "";
+        document.getElementById("input-data-dev").value = emp.dataDevolucao  || "";
 
         document.getElementById("modal").style.display = "flex";
     } catch {
@@ -295,8 +315,8 @@ async function salvarEdicao() {
             fecharModal();
             carregarEmprestimos();
         } else {
-            const err = await res.json();
-            mostrarToast("Erro: " + err.erro, "erro");
+            const err = await res.json().catch(() => ({}));
+            mostrarToast("Erro: " + (err.erro || `HTTP ${res.status}`), "erro");
         }
     } catch {
         mostrarToast("Erro ao conectar ao servidor.", "erro");
@@ -314,7 +334,8 @@ async function registrarDevolucao(id) {
             mostrarToast("Devolução registrada!");
             carregarEmprestimos();
         } else {
-            mostrarToast("Erro ao registrar devolução.", "erro");
+            const err = await res.json().catch(() => ({}));
+            mostrarToast("Erro ao registrar devolução: " + (err.erro || `HTTP ${res.status}`), "erro");
         }
     } catch {
         mostrarToast("Erro ao conectar ao servidor.", "erro");
@@ -332,7 +353,8 @@ async function excluirEmprestimo(id) {
             mostrarToast("Empréstimo excluído.");
             carregarEmprestimos();
         } else {
-            mostrarToast("Erro ao excluir.", "erro");
+            const err = await res.json().catch(() => ({}));
+            mostrarToast("Erro ao excluir: " + (err.erro || `HTTP ${res.status}`), "erro");
         }
     } catch {
         mostrarToast("Erro ao conectar ao servidor.", "erro");
@@ -377,8 +399,8 @@ function lerFormulario() {
     }
 
     return {
-        idUsuario: parseInt(idUsuario),
-        idLivro:   parseInt(idLivro),
+        idUsuario:      parseInt(idUsuario),
+        idLivro:        parseInt(idLivro),
         dataEmprestimo,
         dataDevolucao
     };

@@ -8,8 +8,7 @@ public class Usuario {
     private String email;
     private String senha;
     private String tipo;
-    private String status;
-
+    
     public Usuario() {}
 
     public static Usuario criarAdminPadrao() {
@@ -21,7 +20,6 @@ public class Usuario {
         this.email = email;
         this.senha = senha;
         this.tipo  = (tipo == null || tipo.isEmpty()) ? "Standard" : tipo;
-        this.status = "Ativo"; // Valor padrão para o status
     }
 
     public void setId(int id)          { this.id = id; }
@@ -39,8 +37,7 @@ public class Usuario {
     public void   setTipo(String tipo) { this.tipo = tipo; }
     public String getTipo()            { return tipo; }
 
-    public void   setStatus(String status) { this.status = status; }
-    public String getStatus()              { return status; }
+    
 
     public byte[] toByteArray() throws IOException {
         ByteArrayOutputStream ba  = new ByteArrayOutputStream();
@@ -54,7 +51,6 @@ public class Usuario {
         dos.writeUTF(email != null ? email : "");
         dos.writeUTF(senha != null ? senha : "");
         dos.writeUTF(tipo  != null ? tipo  : "Standard");
-        dos.writeUTF(status != null ? status : "Ativo");
 
         return ba.toByteArray();
     }
@@ -68,6 +64,5 @@ public class Usuario {
         email = dis.readUTF();
         senha = dis.readUTF();
         tipo  = dis.readUTF();
-        status = dis.readUTF();
     }
 }
