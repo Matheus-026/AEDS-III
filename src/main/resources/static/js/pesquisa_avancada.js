@@ -103,14 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 3. Monta os cards com os novos campos (Autor e Status)
                 data.forEach(livro => {
                     const generos = livro.generos ? livro.generos.join(", ") : "Sem gênero";
-                    const autor = livro.nomeAutor ? livro.nomeAutor : "Não informado";
                     const statusEmprestimo = livro.usuarioEmprestimo ? `Emprestado para ${livro.usuarioEmprestimo}` : "Disponível";
 
                     // Note que usei a classe 'resultado-item' para pegar o estilo de caixinha do CSS
                     html += `
                         <div class="resultado-item">
                             <strong>${livro.titulo}</strong>
-                            <strong>Autor:</strong> ${autor}<br>
                             <strong>Preço:</strong> R$ ${livro.preco}<br>
                             <strong>Gêneros:</strong> ${generos}<br>
                             <strong>Status:</strong> ${statusEmprestimo}
@@ -142,7 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (dados.nomeUsuario) url.searchParams.append('usuarioNome', dados.nomeUsuario);
         if (dados.emailUsuario) url.searchParams.append('usuarioEmail', dados.emailUsuario);
-        if (dados.statusUsuario) url.searchParams.append('usuarioStatus', dados.statusUsuario);
         
         if (dados.livroEmprestado) url.searchParams.append('emprestimoLivro', dados.livroEmprestado);
         if (dados.usuarioEmprestimo) url.searchParams.append('emprestimoUsuario', dados.usuarioEmprestimo);
