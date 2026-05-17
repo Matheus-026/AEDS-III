@@ -5,7 +5,7 @@ body::before {
     content: "";
     position: fixed;
     inset: 0;
-    background-image: url("../images/corujaF.png");
+    background-image: url("../imgs/corujaF.png");
     background-repeat: no-repeat;
     background-position: center 160px;
     background-size: 650px;
