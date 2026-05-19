@@ -26,51 +26,240 @@ window.addEventListener('scroll', () => {
 let modoEdicao = false;
 let idEditando  = null;
 
+// ─── Aba ativa ────────────────────────────────────────────────────────────────
+// "todos" | "porUsuario" | "porLivro"
+let abaAtiva = "todos";
+
 // ─── Elementos de autocomplete ────────────────────────────────────────────────
 const inputUsuario     = document.getElementById("input-usuario-nome");
 const sugestoesUsuario = document.getElementById("lista-usuarios");
-
-const inputLivro     = document.getElementById("input-livro-nome");
-const sugestoesLivro = document.getElementById("lista-livros");
+const inputLivro       = document.getElementById("input-livro-nome");
+const sugestoesLivro   = document.getElementById("lista-livros");
 
 // ─── Ao carregar a página ─────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
     await Promise.all([carregarLivros(), carregarUsuarios()]);
     await carregarEmprestimos();
 
-    document.getElementById("search_emprestimo").addEventListener("input", aplicarFiltros);
-    document.getElementById("filtro-status")?.addEventListener("change", aplicarFiltros);
+    // busca geral
+    document.getElementById("search_emprestimo")
+        .addEventListener("input", aplicarFiltros);
+    document.getElementById("filtro-status")
+        ?.addEventListener("change", aplicarFiltros);
 
-    document.getElementById("formEmprestimo").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        if (modoEdicao) {
-            await salvarEdicao();
-        } else {
-            await criarEmprestimo();
-        }
+    // filtros N:N
+    document.getElementById("filtro-usuario")
+        ?.addEventListener("change", consultarPorUsuario);
+    document.getElementById("filtro-livro")
+        ?.addEventListener("change", consultarPorLivro);
+
+    // abas
+    document.querySelectorAll(".aba-btn").forEach(btn => {
+        btn.addEventListener("click", () => trocarAba(btn.dataset.aba));
     });
 
+    // autocomplete modal
     configurarAutocomplete(
-        inputUsuario,
-        sugestoesUsuario,
-        () => usuariosCache,
-        u => u.nome,
-        u => u.id
+        inputUsuario, sugestoesUsuario,
+        () => usuariosCache, u => u.nome, u => u.id
+    );
+    configurarAutocomplete(
+        inputLivro, sugestoesLivro,
+        () => livrosCache, l => l.titulo, l => l.id
     );
 
-    configurarAutocomplete(
-        inputLivro,
-        sugestoesLivro,
-        () => livrosCache,
-        l => l.titulo,
-        l => l.id
-    );
+    // ao selecionar usuário no modal, verifica livros já ativos
+    inputUsuario.addEventListener("change", atualizarIndicadoresLivro);
+    inputLivro.addEventListener("change",   atualizarIndicadoresLivro);
+
+    // submit do formulário
+    document.getElementById("formEmprestimo").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (modoEdicao) await salvarEdicao();
+        else            await criarEmprestimo();
+    });
+
+    // popular selects de filtro N:N
+    popularFiltroUsuario();
+    popularFiltroLivro();
 });
+
+// ─── Abas ─────────────────────────────────────────────────────────────────────
+function trocarAba(aba) {
+    abaAtiva = aba;
+
+    document.querySelectorAll(".aba-btn").forEach(btn => {
+        btn.classList.toggle("ativa", btn.dataset.aba === aba);
+    });
+
+    document.getElementById("painel-todos").style.display     = aba === "todos"      ? "" : "none";
+    document.getElementById("painel-usuario").style.display   = aba === "porUsuario" ? "" : "none";
+    document.getElementById("painel-livro").style.display     = aba === "porLivro"   ? "" : "none";
+}
+
+// ─── Popular selects dos filtros N:N ─────────────────────────────────────────
+function popularFiltroUsuario() {
+    const sel = document.getElementById("filtro-usuario");
+    if (!sel) return;
+    sel.innerHTML = `<option value="">Selecione um usuário...</option>`;
+    usuariosCache.forEach(u => {
+        sel.innerHTML += `<option value="${u.id}">${u.nome}</option>`;
+    });
+}
+
+function popularFiltroLivro() {
+    const sel = document.getElementById("filtro-livro");
+    if (!sel) return;
+    sel.innerHTML = `<option value="">Selecione um livro...</option>`;
+    livrosCache.forEach(l => {
+        sel.innerHTML += `<option value="${l.id}">${l.titulo}</option>`;
+    });
+}
+
+// ─── Consulta N:N — por usuário ───────────────────────────────────────────────
+async function consultarPorUsuario() {
+    const sel   = document.getElementById("filtro-usuario");
+    const id    = sel?.value;
+    const tbody = document.getElementById("tbody-usuario");
+    if (!tbody) return;
+
+    if (!id) {
+        tbody.innerHTML = `<tr><td colspan="5" class="vazio">Selecione um usuário para ver seus empréstimos.</td></tr>`;
+        document.getElementById("info-usuario").textContent = "";
+        return;
+    }
+
+    const usuario = usuariosCache.find(u => u.id == id);
+    document.getElementById("info-usuario").textContent =
+        usuario ? `Empréstimos de: ${usuario.nome}` : "";
+
+    try {
+        const res = await fetch(`${API_URL}/usuario/${id}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const lista = await res.json();
+
+        if (!lista.length) {
+            tbody.innerHTML = `<tr><td colspan="5" class="vazio">Nenhum empréstimo encontrado para este usuário.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = lista.map(emp => `
+            <tr>
+                <td>${emp.tituloLivro || `Livro #${emp.idLivro}`}</td>
+                <td>${formatarData(emp.dataEmprestimo)}</td>
+                <td>${formatarData(emp.dataDevolucao)}</td>
+                <td class="status ${classeStatus(emp.status)}">${emp.status}</td>
+                <td class="acoes">
+                    <button class="acao-btn" onclick="toggleMenu(this)">⋮</button>
+                    <div class="menu-acoes">
+                        <div class="item" onclick="registrarDevolucao(${emp.id})">Registrar Devolução</div>
+                        <div class="item" onclick="excluirEmprestimo(${emp.id})">Excluir</div>
+                    </div>
+                </td>
+            </tr>
+        `).join("");
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" class="vazio erro">Erro ao buscar empréstimos.</td></tr>`;
+        console.error(err);
+    }
+}
+
+// ─── Consulta N:N — por livro ─────────────────────────────────────────────────
+async function consultarPorLivro() {
+    const sel   = document.getElementById("filtro-livro");
+    const id    = sel?.value;
+    const tbody = document.getElementById("tbody-livro");
+    if (!tbody) return;
+
+    if (!id) {
+        tbody.innerHTML = `<tr><td colspan="5" class="vazio">Selecione um livro para ver seu histórico.</td></tr>`;
+        document.getElementById("info-livro").textContent = "";
+        return;
+    }
+
+    const livro = livrosCache.find(l => l.id == id);
+    document.getElementById("info-livro").textContent =
+        livro ? `Histórico de: ${livro.titulo}` : "";
+
+    try {
+        const res = await fetch(`${API_URL}/livro/${id}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const lista = await res.json();
+
+        if (!lista.length) {
+            tbody.innerHTML = `<tr><td colspan="5" class="vazio">Nenhum empréstimo encontrado para este livro.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = lista.map(emp => `
+            <tr>
+                <td>${emp.nomeUsuario || `Usuário #${emp.idUsuario}`}</td>
+                <td>${formatarData(emp.dataEmprestimo)}</td>
+                <td>${formatarData(emp.dataDevolucao)}</td>
+                <td class="status ${classeStatus(emp.status)}">${emp.status}</td>
+                <td class="acoes">
+                    <button class="acao-btn" onclick="toggleMenu(this)">⋮</button>
+                    <div class="menu-acoes">
+                        <div class="item" onclick="registrarDevolucao(${emp.id})">Registrar Devolução</div>
+                        <div class="item" onclick="excluirEmprestimo(${emp.id})">Excluir</div>
+                    </div>
+                </td>
+            </tr>
+        `).join("");
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" class="vazio erro">Erro ao buscar empréstimos.</td></tr>`;
+        console.error(err);
+    }
+}
+
+// ─── Indicador visual — livro já ativo para o usuário ─────────────────────────
+// Quando usuário E livro estão selecionados no modal, consulta o backend
+// para verificar se já existe empréstimo ativo para esse par.
+async function atualizarIndicadoresLivro() {
+    const idUsuario = inputUsuario.dataset.id;
+    const idLivro   = inputLivro.dataset.id;
+    const aviso     = document.getElementById("aviso-par-ativo");
+    if (!aviso) return;
+
+    if (!idUsuario || !idLivro) {
+        aviso.style.display = "none";
+        return;
+    }
+
+    try {
+        const res = await fetch(
+            `${API_URL}/ativo?idUsuario=${idUsuario}&idLivro=${idLivro}`
+        );
+
+        if (res.ok) {
+            const emp = await res.json();
+            if (emp && emp.id) {
+                // já existe empréstimo ativo para esse par
+                aviso.style.display = "flex";
+                aviso.innerHTML = `
+                    ⚠️ Este usuário já tem este livro em aberto
+                    (empréstimo #${emp.id}, devolução: ${formatarData(emp.dataDevolucao)}).
+                    É necessário devolver antes de um novo empréstimo.
+                `;
+                document.getElementById("btn-submit").disabled = true;
+            } else {
+                aviso.style.display = "none";
+                document.getElementById("btn-submit").disabled = false;
+            }
+        } else {
+            // 404 = não encontrado = par livre
+            aviso.style.display = "none";
+            document.getElementById("btn-submit").disabled = false;
+        }
+    } catch {
+        aviso.style.display = "none";
+    }
+}
 
 // ─── Carregar dados ───────────────────────────────────────────────────────────
 async function carregarLivros() {
     try {
-        const res = await fetch(API_LIVROS);
+        const res  = await fetch(API_LIVROS);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         livrosCache = Array.isArray(data) ? data : [];
@@ -82,13 +271,37 @@ async function carregarLivros() {
 
 async function carregarUsuarios() {
     try {
-        const res = await fetch(API_USUARIOS);
+        const res  = await fetch(API_USUARIOS);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         usuariosCache = Array.isArray(data) ? data : [];
     } catch (err) {
         console.error("Erro ao carregar usuários:", err);
         mostrarToast("Erro ao carregar usuários.", "erro");
+    }
+}
+
+async function carregarEmprestimos() {
+    try {
+        const res = await fetch(API_URL);
+        if (!res.ok) {
+            let msg = `HTTP ${res.status}`;
+            try { const c = await res.json(); if (c?.erro) msg = c.erro; } catch {}
+            renderizarErro(msg);
+            mostrarToast("Não foi possível carregar os empréstimos: " + msg, "erro");
+            return;
+        }
+        const data = await res.json();
+        if (!Array.isArray(data)) {
+            renderizarErro("Resposta inválida do servidor.");
+            return;
+        }
+        emprestimosCache = data;
+        renderizarTabela(data);
+    } catch (err) {
+        console.error(err);
+        renderizarErro("Não foi possível conectar ao servidor.");
+        mostrarToast("Não foi possível conectar ao servidor.", "erro");
     }
 }
 
@@ -115,6 +328,8 @@ function configurarAutocomplete(input, sugestoesDiv, getCache, getLabel, getId) 
                 input.value      = getLabel(item);
                 input.dataset.id = getId(item);
                 sugestoesDiv.innerHTML = "";
+                // dispara verificação de par ativo
+                input.dispatchEvent(new Event("change"));
             });
 
             sugestoesDiv.appendChild(div);
@@ -129,54 +344,16 @@ function configurarAutocomplete(input, sugestoesDiv, getCache, getLabel, getId) 
     });
 }
 
-// ─── Carregar empréstimos ─────────────────────────────────────────────────────
-async function carregarEmprestimos() {
-    try {
-        const res = await fetch(API_URL);
-
-        if (!res.ok) {
-            // tenta extrair mensagem de erro do servidor
-            let msgErro = `Erro do servidor: HTTP ${res.status}`;
-            try {
-                const corpo = await res.json();
-                if (corpo && corpo.erro) msgErro = corpo.erro;
-            } catch (_) { /* ignora parse error */ }
-
-            console.error("Erro ao carregar empréstimos:", msgErro);
-            mostrarToast("Não foi possível carregar os empréstimos: " + msgErro, "erro");
-            renderizarErro(msgErro);
-            return;
-        }
-
-        const data = await res.json();
-
-        if (!Array.isArray(data)) {
-            console.error("Resposta inesperada da API (não é array):", data);
-            mostrarToast("Resposta inválida do servidor.", "erro");
-            renderizarErro("Resposta inválida do servidor.");
-            return;
-        }
-
-        emprestimosCache = data;
-        renderizarTabela(data);
-
-    } catch (err) {
-        console.error("Erro ao carregar empréstimos:", err);
-        mostrarToast("Não foi possível conectar ao servidor.", "erro");
-        renderizarErro("Não foi possível conectar ao servidor.");
-    }
-}
-
-// ─── Filtros ──────────────────────────────────────────────────────────────────
+// ─── Filtros (aba "todos") ────────────────────────────────────────────────────
 function aplicarFiltros() {
     const termo  = document.getElementById("search_emprestimo").value.toLowerCase();
     const status = document.getElementById("filtro-status")?.value || "";
 
     const filtrados = emprestimosCache.filter(emp => {
         const bateTexto  = !termo ||
-            (emp.nomeUsuario  || "").toLowerCase().includes(termo) ||
-            (emp.tituloLivro  || "").toLowerCase().includes(termo) ||
-            (emp.status       || "").toLowerCase().includes(termo);
+            (emp.nomeUsuario || "").toLowerCase().includes(termo) ||
+            (emp.tituloLivro || "").toLowerCase().includes(termo) ||
+            (emp.status      || "").toLowerCase().includes(termo);
         const bateStatus = !status || emp.status === status;
         return bateTexto && bateStatus;
     });
@@ -184,13 +361,14 @@ function aplicarFiltros() {
     renderizarTabela(filtrados);
 }
 
-// ─── Renderizar tabela ────────────────────────────────────────────────────────
+// ─── Renderizar tabela principal ──────────────────────────────────────────────
 function renderizarTabela(lista) {
-    const tbody = document.querySelector("table tbody");
+    const tbody = document.querySelector("#tabela-todos tbody");
+    if (!tbody) return;
     tbody.innerHTML = "";
 
     if (!Array.isArray(lista) || lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#888;padding:20px;">Nenhum empréstimo cadastrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="vazio">Nenhum empréstimo cadastrado.</td></tr>`;
         return;
     }
 
@@ -216,9 +394,9 @@ function renderizarTabela(lista) {
 }
 
 function renderizarErro(msg) {
-    const tbody = document.querySelector("table tbody");
+    const tbody = document.querySelector("#tabela-todos tbody");
     if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#c0392b;padding:20px;">⚠ ${msg}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="vazio erro">⚠ ${msg}</td></tr>`;
     }
 }
 
@@ -226,11 +404,14 @@ function renderizarErro(msg) {
 function abrirModal() {
     modoEdicao = false;
     idEditando  = null;
-    document.getElementById("modal-titulo").textContent = "Registrar Empréstimo";
-    document.getElementById("btn-submit").textContent   = "Adicionar";
+    document.getElementById("modal-titulo").textContent   = "Registrar Empréstimo";
+    document.getElementById("btn-submit").textContent     = "Adicionar";
+    document.getElementById("btn-submit").disabled        = false;
     document.getElementById("formEmprestimo").reset();
     inputUsuario.dataset.id = "";
     inputLivro.dataset.id   = "";
+    const aviso = document.getElementById("aviso-par-ativo");
+    if (aviso) aviso.style.display = "none";
     document.getElementById("modal").style.display = "flex";
 }
 
@@ -238,6 +419,9 @@ function fecharModal() {
     document.getElementById("modal").style.display = "none";
     sugestoesUsuario.innerHTML = "";
     sugestoesLivro.innerHTML   = "";
+    const aviso = document.getElementById("aviso-par-ativo");
+    if (aviso) aviso.style.display = "none";
+    document.getElementById("btn-submit").disabled = false;
 }
 
 // ─── Criar empréstimo ─────────────────────────────────────────────────────────
@@ -247,9 +431,9 @@ async function criarEmprestimo() {
 
     try {
         const res = await fetch(API_URL, {
-            method: "POST",
+            method:  "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body:    JSON.stringify(payload)
         });
 
         if (res.ok) {
@@ -258,7 +442,13 @@ async function criarEmprestimo() {
             carregarEmprestimos();
         } else {
             const err = await res.json().catch(() => ({}));
-            mostrarToast("Erro: " + (err.erro || `HTTP ${res.status}`), "erro");
+            // mensagem amigável para par duplicado ativo
+            const msg = err.erro || err.message || `HTTP ${res.status}`;
+            if (msg.includes("empréstimo ativo")) {
+                mostrarToast("Este livro já está emprestado para este usuário. Registre a devolução primeiro.", "erro");
+            } else {
+                mostrarToast("Erro: " + msg, "erro");
+            }
         }
     } catch {
         mostrarToast("Erro ao conectar ao servidor.", "erro");
@@ -269,12 +459,8 @@ async function criarEmprestimo() {
 async function abrirEdicao(id) {
     fecharMenus();
     try {
-        const res = await fetch(`${API_URL}?id=${id}`);
-
-        if (!res.ok) {
-            mostrarToast("Empréstimo não encontrado.", "erro");
-            return;
-        }
+        const res = await fetch(`${API_URL}/${id}`);
+        if (!res.ok) { mostrarToast("Empréstimo não encontrado.", "erro"); return; }
 
         const emp = await res.json();
 
@@ -283,15 +469,18 @@ async function abrirEdicao(id) {
 
         document.getElementById("modal-titulo").textContent = "Editar Empréstimo";
         document.getElementById("btn-submit").textContent   = "Salvar";
+        document.getElementById("btn-submit").disabled      = false;
 
         inputUsuario.value      = emp.nomeUsuario || "";
         inputUsuario.dataset.id = emp.idUsuario;
-
-        inputLivro.value      = emp.tituloLivro || "";
-        inputLivro.dataset.id = emp.idLivro;
+        inputLivro.value        = emp.tituloLivro || "";
+        inputLivro.dataset.id   = emp.idLivro;
 
         document.getElementById("input-data-emp").value = emp.dataEmprestimo || "";
         document.getElementById("input-data-dev").value = emp.dataDevolucao  || "";
+
+        const aviso = document.getElementById("aviso-par-ativo");
+        if (aviso) aviso.style.display = "none";
 
         document.getElementById("modal").style.display = "flex";
     } catch {
@@ -304,10 +493,10 @@ async function salvarEdicao() {
     if (!payload) return;
 
     try {
-        const res = await fetch(`${API_URL}?id=${idEditando}`, {
-            method: "PUT",
+        const res = await fetch(`${API_URL}/${idEditando}`, {
+            method:  "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body:    JSON.stringify(payload)
         });
 
         if (res.ok) {
@@ -329,13 +518,16 @@ async function registrarDevolucao(id) {
     if (!confirm("Confirmar devolução deste empréstimo?")) return;
 
     try {
-        const res = await fetch(`${API_URL}/devolver?id=${id}`, { method: "PUT" });
+        const res = await fetch(`${API_URL}/${id}/devolver`, { method: "PUT" });
         if (res.ok) {
             mostrarToast("Devolução registrada!");
             carregarEmprestimos();
+            // atualiza painéis N:N se estiverem ativos
+            if (abaAtiva === "porUsuario") consultarPorUsuario();
+            if (abaAtiva === "porLivro")   consultarPorLivro();
         } else {
             const err = await res.json().catch(() => ({}));
-            mostrarToast("Erro ao registrar devolução: " + (err.erro || `HTTP ${res.status}`), "erro");
+            mostrarToast("Erro: " + (err.erro || `HTTP ${res.status}`), "erro");
         }
     } catch {
         mostrarToast("Erro ao conectar ao servidor.", "erro");
@@ -348,13 +540,15 @@ async function excluirEmprestimo(id) {
     if (!confirm("Tem certeza que deseja excluir este empréstimo?")) return;
 
     try {
-        const res = await fetch(`${API_URL}?id=${id}`, { method: "DELETE" });
+        const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
         if (res.ok) {
             mostrarToast("Empréstimo excluído.");
             carregarEmprestimos();
+            if (abaAtiva === "porUsuario") consultarPorUsuario();
+            if (abaAtiva === "porLivro")   consultarPorLivro();
         } else {
             const err = await res.json().catch(() => ({}));
-            mostrarToast("Erro ao excluir: " + (err.erro || `HTTP ${res.status}`), "erro");
+            mostrarToast("Erro: " + (err.erro || `HTTP ${res.status}`), "erro");
         }
     } catch {
         mostrarToast("Erro ao conectar ao servidor.", "erro");
@@ -423,5 +617,5 @@ function mostrarToast(msg, tipo = "sucesso") {
     toast.textContent   = msg;
     toast.className     = `toast ${tipo}`;
     toast.style.display = "block";
-    setTimeout(() => { toast.style.display = "none"; }, 3000);
+    setTimeout(() => { toast.style.display = "none"; }, 3500);
 }

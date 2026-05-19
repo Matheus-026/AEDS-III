@@ -16,17 +16,21 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/emprestimos")
-@CrossOrigin
+@CrossOrigin(origins = "*")
 public class EmprestimoController {
 
-    private final EmprestimoDAO emprestimoDAO;
-    private final UsuarioDAO usuarioDAO;
-    private final LivroDAO livroDAO;
+    private static EmprestimoDAO emprestimoDAO;
+    private static UsuarioDAO    usuarioDAO;
+    private static LivroDAO      livroDAO;
 
-    public EmprestimoController() throws IOException {
-        emprestimoDAO = new EmprestimoDAO();
-        usuarioDAO    = new UsuarioDAO();
-        livroDAO      = new LivroDAO();
+    static {
+        try {
+            emprestimoDAO = new EmprestimoDAO();
+            usuarioDAO    = new UsuarioDAO();
+            livroDAO      = new LivroDAO();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     // ─── Tratamento global de exceções ────────────────────────────────────────
@@ -37,82 +41,93 @@ public class EmprestimoController {
         return ResponseEntity.status(500).body(Map.of("erro", msg));
     }
 
-    // ─── LISTAR TODOS ─────────────────────────────────────────────────────────
+    // =========================================================================
+    // LISTAR TODOS
+    // GET /api/emprestimos
+    // =========================================================================
     @GetMapping
     public ResponseEntity<?> listar() {
         try {
             List<Emprestimo> todos = emprestimoDAO.listAll();
-
-            if (todos == null) {
-                return ResponseEntity.ok(Collections.emptyList());
-            }
-
-            List<Map<String, Object>> resposta = new ArrayList<>();
-
-            for (Emprestimo e : todos) {
-                try {
-                    Usuario u = usuarioDAO.read(e.getIdUsuario());
-                    Livro   l = livroDAO.read(e.getIdLivro());
-
-                    Map<String, Object> obj = new HashMap<>();
-                    obj.put("id",             e.getId());
-                    obj.put("idUsuario",      e.getIdUsuario());
-                    obj.put("idLivro",        e.getIdLivro());
-                    obj.put("nomeUsuario",    u != null ? u.getNome()   : "Desconhecido");
-                    obj.put("tituloLivro",    l != null ? l.getTitulo() : "Desconhecido");
-                    obj.put("dataEmprestimo", e.getDataEmprestimo() != null ? e.getDataEmprestimo().toString() : "");
-                    obj.put("dataDevolucao",  e.getDataDevolucao()  != null ? e.getDataDevolucao().toString()  : "");
-                    obj.put("status",         e.getStatus() != null ? e.getStatus() : "");
-                    resposta.add(obj);
-
-                } catch (Exception ex) {
-                    // um empréstimo com dados ruins não derruba a lista inteira
-                    System.err.println("[listar] Empréstimo id=" + e.getId() + " ignorado: " + ex.getMessage());
-                }
-            }
-
-            return ResponseEntity.ok(resposta);
-
+            return ResponseEntity.ok(enriquecer(todos));
         } catch (Exception ex) {
             ex.printStackTrace();
             return ResponseEntity.status(500)
-                    .body(Map.of("erro", ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName()));
+                .body(Map.of("erro", ex.getMessage() != null ? ex.getMessage() : "Erro interno"));
         }
     }
 
-    // ─── BUSCAR POR ID ────────────────────────────────────────────────────────
-    @GetMapping(params = "id")
-    public ResponseEntity<?> buscarPorId(@RequestParam int id) {
+    // =========================================================================
+    // BUSCAR POR ID
+    // GET /api/emprestimos/{id}
+    // =========================================================================
+    @GetMapping("/{id}")
+    public ResponseEntity<?> buscarPorId(@PathVariable int id) {
         try {
             Emprestimo e = emprestimoDAO.read(id);
-
-            if (e == null) {
+            if (e == null)
                 return ResponseEntity.status(404).body(Map.of("erro", "Empréstimo não encontrado"));
-            }
-
-            Usuario u = usuarioDAO.read(e.getIdUsuario());
-            Livro   l = livroDAO.read(e.getIdLivro());
-
-            Map<String, Object> obj = new HashMap<>();
-            obj.put("id",             e.getId());
-            obj.put("idUsuario",      e.getIdUsuario());
-            obj.put("idLivro",        e.getIdLivro());
-            obj.put("nomeUsuario",    u != null ? u.getNome()   : "Desconhecido");
-            obj.put("tituloLivro",    l != null ? l.getTitulo() : "Desconhecido");
-            obj.put("dataEmprestimo", e.getDataEmprestimo() != null ? e.getDataEmprestimo().toString() : "");
-            obj.put("dataDevolucao",  e.getDataDevolucao()  != null ? e.getDataDevolucao().toString()  : "");
-            obj.put("status",         e.getStatus() != null ? e.getStatus() : "");
-
-            return ResponseEntity.ok(obj);
-
+            return ResponseEntity.ok(enriquecerUm(e));
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(500)
-                    .body(Map.of("erro", ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName()));
+            return ResponseEntity.status(500).body(Map.of("erro", ex.getMessage()));
         }
     }
 
-    // ─── CRIAR ────────────────────────────────────────────────────────────────
+    // =========================================================================
+    // BUSCAR POR USUÁRIO (N:N — lado usuario → livros)
+    // GET /api/emprestimos/usuario/{idUsuario}
+    // =========================================================================
+    @GetMapping("/usuario/{idUsuario}")
+    public ResponseEntity<?> buscarPorUsuario(@PathVariable int idUsuario) {
+        try {
+            List<Emprestimo> lista = emprestimoDAO.buscarPorUsuario(idUsuario);
+            return ResponseEntity.ok(enriquecer(lista));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("erro", ex.getMessage()));
+        }
+    }
+
+    // =========================================================================
+    // BUSCAR POR LIVRO (N:N — lado livro → usuários)
+    // GET /api/emprestimos/livro/{idLivro}
+    // =========================================================================
+    @GetMapping("/livro/{idLivro}")
+    public ResponseEntity<?> buscarPorLivro(@PathVariable int idLivro) {
+        try {
+            List<Emprestimo> lista = emprestimoDAO.buscarPorLivro(idLivro);
+            return ResponseEntity.ok(enriquecer(lista));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("erro", ex.getMessage()));
+        }
+    }
+
+    // =========================================================================
+    // BUSCAR ATIVO POR PAR (chave composta — indicador visual no modal)
+    // GET /api/emprestimos/ativo?idUsuario=X&idLivro=Y
+    // Retorna 200 + empréstimo se houver ativo, 404 se par livre.
+    // =========================================================================
+    @GetMapping("/ativo")
+    public ResponseEntity<?> buscarAtivoPorPar(
+            @RequestParam int idUsuario,
+            @RequestParam int idLivro) {
+        try {
+            Emprestimo e = emprestimoDAO.buscarAtivoPorPar(idUsuario, idLivro);
+            if (e == null)
+                return ResponseEntity.status(404).body(Map.of("livre", true));
+            return ResponseEntity.ok(enriquecerUm(e));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("erro", ex.getMessage()));
+        }
+    }
+
+    // =========================================================================
+    // CRIAR
+    // POST /api/emprestimos
+    // =========================================================================
     @PostMapping
     public ResponseEntity<?> criar(@RequestBody Map<String, String> dados) {
         try {
@@ -122,62 +137,73 @@ public class EmprestimoController {
             Usuario usuario = usuarioDAO.read(idUsuario);
             Livro   livro   = livroDAO.read(idLivro);
 
-            if (usuario == null) return ResponseEntity.status(404).body(Map.of("erro", "Usuário não encontrado"));
-            if (livro   == null) return ResponseEntity.status(404).body(Map.of("erro", "Livro não encontrado"));
+            if (usuario == null)
+                return ResponseEntity.status(404).body(Map.of("erro", "Usuário não encontrado"));
+            if (livro == null)
+                return ResponseEntity.status(404).body(Map.of("erro", "Livro não encontrado"));
 
             Emprestimo e = new Emprestimo(
-                    idUsuario,
-                    idLivro,
-                    LocalDate.parse(dados.get("dataEmprestimo")),
-                    LocalDate.parse(dados.get("dataDevolucao"))
+                idUsuario,
+                idLivro,
+                LocalDate.parse(dados.get("dataEmprestimo")),
+                LocalDate.parse(dados.get("dataDevolucao"))
             );
 
             int novoId = emprestimoDAO.create(e);
             return ResponseEntity.ok(Map.of("id", novoId));
 
+        } catch (IllegalStateException ex) {
+            // par duplicado ativo — mensagem amigável para o front-end
+            return ResponseEntity.status(409).body(Map.of("erro", ex.getMessage()));
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(500)
-                    .body(Map.of("erro", ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName()));
+            return ResponseEntity.status(500).body(Map.of("erro", ex.getMessage()));
         }
     }
 
-    // ─── ATUALIZAR ────────────────────────────────────────────────────────────
-    @PutMapping
+    // =========================================================================
+    // ATUALIZAR
+    // PUT /api/emprestimos/{id}
+    // =========================================================================
+    @PutMapping("/{id}")
     public ResponseEntity<?> atualizar(
-            @RequestParam int id,
+            @PathVariable int id,
             @RequestBody Map<String, String> dados) {
         try {
             Emprestimo existente = emprestimoDAO.read(id);
-
-            if (existente == null) {
+            if (existente == null)
                 return ResponseEntity.status(404).body(Map.of("erro", "Empréstimo não encontrado"));
-            }
 
-            existente.setIdUsuario(Integer.parseInt(dados.get("idUsuario")));
-            existente.setIdLivro(Integer.parseInt(dados.get("idLivro")));
-            existente.setDataEmprestimo(LocalDate.parse(dados.get("dataEmprestimo")));
-            existente.setDataDevolucao(LocalDate.parse(dados.get("dataDevolucao")));
+            if (dados.containsKey("idUsuario"))
+                existente.setIdUsuario(Integer.parseInt(dados.get("idUsuario")));
+            if (dados.containsKey("idLivro"))
+                existente.setIdLivro(Integer.parseInt(dados.get("idLivro")));
+            if (dados.containsKey("dataEmprestimo"))
+                existente.setDataEmprestimo(LocalDate.parse(dados.get("dataEmprestimo")));
+            if (dados.containsKey("dataDevolucao"))
+                existente.setDataDevolucao(LocalDate.parse(dados.get("dataDevolucao")));
+            if (dados.containsKey("status"))
+                existente.setStatus(dados.get("status"));
 
             emprestimoDAO.update(existente);
             return ResponseEntity.ok(Map.of("ok", true));
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(500)
-                    .body(Map.of("erro", ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName()));
+            return ResponseEntity.status(500).body(Map.of("erro", ex.getMessage()));
         }
     }
 
-    // ─── DEVOLVER ─────────────────────────────────────────────────────────────
-    @PutMapping("/devolver")
-    public ResponseEntity<?> devolver(@RequestParam int id) {
+    // =========================================================================
+    // DEVOLVER POR ID
+    // PUT /api/emprestimos/{id}/devolver
+    // =========================================================================
+    @PutMapping("/{id}/devolver")
+    public ResponseEntity<?> devolver(@PathVariable int id) {
         try {
             Emprestimo e = emprestimoDAO.read(id);
-
-            if (e == null) {
+            if (e == null)
                 return ResponseEntity.status(404).body(Map.of("erro", "Empréstimo não encontrado"));
-            }
 
             e.setStatus("Devolvido");
             emprestimoDAO.update(e);
@@ -185,27 +211,59 @@ public class EmprestimoController {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(500)
-                    .body(Map.of("erro", ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName()));
+            return ResponseEntity.status(500).body(Map.of("erro", ex.getMessage()));
         }
     }
 
-    // ─── DELETAR ──────────────────────────────────────────────────────────────
-    @DeleteMapping
-    public ResponseEntity<?> deletar(@RequestParam int id) {
+    // =========================================================================
+    // DELETAR
+    // DELETE /api/emprestimos/{id}
+    // =========================================================================
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletar(@PathVariable int id) {
         try {
             boolean ok = emprestimoDAO.delete(id);
-
-            if (!ok) {
+            if (!ok)
                 return ResponseEntity.status(404).body(Map.of("erro", "Empréstimo não encontrado"));
-            }
-
             return ResponseEntity.ok(Map.of("ok", true));
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            return ResponseEntity.status(500)
-                    .body(Map.of("erro", ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName()));
+            return ResponseEntity.status(500).body(Map.of("erro", ex.getMessage()));
         }
+    }
+
+    // =========================================================================
+    // HELPERS PRIVADOS
+    // =========================================================================
+
+    /** Enriquece um único empréstimo com nome do usuário e título do livro. */
+    private Map<String, Object> enriquecerUm(Emprestimo e) throws IOException {
+        Usuario u = usuarioDAO.read(e.getIdUsuario());
+        Livro   l = livroDAO.read(e.getIdLivro());
+
+        Map<String, Object> obj = new LinkedHashMap<>();
+        obj.put("id",             e.getId());
+        obj.put("idUsuario",      e.getIdUsuario());
+        obj.put("idLivro",        e.getIdLivro());
+        obj.put("nomeUsuario",    u != null ? u.getNome()   : "Desconhecido");
+        obj.put("tituloLivro",    l != null ? l.getTitulo() : "Desconhecido");
+        obj.put("dataEmprestimo", e.getDataEmprestimo() != null ? e.getDataEmprestimo().toString() : "");
+        obj.put("dataDevolucao",  e.getDataDevolucao()  != null ? e.getDataDevolucao().toString()  : "");
+        obj.put("status",         e.getStatus() != null ? e.getStatus() : "");
+        return obj;
+    }
+
+    /** Enriquece uma lista de empréstimos, ignorando registros com erro. */
+    private List<Map<String, Object>> enriquecer(List<Emprestimo> lista) {
+        List<Map<String, Object>> resultado = new ArrayList<>();
+        for (Emprestimo e : lista) {
+            try {
+                resultado.add(enriquecerUm(e));
+            } catch (Exception ex) {
+                System.err.println("[enriquecer] Empréstimo id=" + e.getId() + " ignorado: " + ex.getMessage());
+            }
+        }
+        return resultado;
     }
 }
