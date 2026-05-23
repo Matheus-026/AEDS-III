@@ -176,4 +176,19 @@ public class LivroController {
                                  .body("Erro ao processar ordenação externa.");
         }
     }
+
+    // ==========================================
+    // CONSULTA ORDENADA (B+)
+    // ==========================================
+    @GetMapping("/ordenados-bplus")
+    public ResponseEntity<List<Livro>> listarOrdenadosPorTitulo() {
+        try {
+            // Chama o método que acabámos de criar no DAO
+            List<Livro> livros = livroDAO.listarLivrosOrdemAlfabetica();
+            return ResponseEntity.ok(livros);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }
