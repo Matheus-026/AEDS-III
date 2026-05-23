@@ -34,6 +34,8 @@ public class LivroDAO {
     /** Índice secundário 1:N: idAutor → [posições no .dat] */
     private HashExtensivel hashAutorLivros;
 
+    private ArvoreBPlus indiceBPlus;
+
    
     // CONSTRUTOR   
     public LivroDAO() throws IOException {
@@ -49,12 +51,36 @@ public class LivroDAO {
             arquivo.writeInt(0); // quantidade de registros ativos
         }
 
+        this.indiceBPlus = new ArvoreBPlus(5, "livros_bplus");
+
+        if (this.indiceBPlus.listarEmOrdemAlfabetica().isEmpty()) {
+            
+            long posicaoOriginal = arquivo.getFilePointer(); // Guarda a posição
+            arquivo.seek(8); // Pula o cabeçalho do livros.dat
+            
+            while (arquivo.getFilePointer() < arquivo.length()) {
+                long pos = arquivo.getFilePointer();
+                boolean ativo = arquivo.readBoolean();
+                int tam = arquivo.readInt();
+                byte[] dados = new byte[tam];
+                arquivo.readFully(dados);
+                
+                if (ativo) {
+                    Livro l = new Livro();
+                    l.fromByteArray(dados);
+                    indiceBPlus.inserir(l.getTitulo(), pos);
+                }
+            }
+            arquivo.seek(posicaoOriginal); // Devolve o ponteiro para o lugar original
+        }
+
         hashPK          = new HashExtensivel("livros");
         hashAutorLivros = new HashExtensivel("autorlivros");
 
         if (indiceEstaVazio("livros") || indiceEstaVazio("autorlivros")) {
             reconstruirIndices();
         }
+
     }
 
     
@@ -80,7 +106,7 @@ public class LivroDAO {
         byte[] dados = livro.toByteArray();
 
         arquivo.seek(pos);
-        arquivo.writeBoolean(true);
+        arquivo.writeBoolean(true); // Lápide (ativo)
         arquivo.writeInt(dados.length);
         arquivo.write(dados);
 
@@ -89,6 +115,9 @@ public class LivroDAO {
 
         // atualiza índice secundário 1:N
         hashAutorLivros.inserirLista(livro.getIdAutor(), pos);
+
+        //Atualiza a Árvore B+
+        indiceBPlus.inserir(livro.getTitulo(), pos);
 
         // atualiza cabeçalho
         arquivo.seek(0);
@@ -387,6 +416,16 @@ public class LivroDAO {
 
                 hashPK.inserir(l.getId(), pos);
                 hashAutorLivros.inserirLista(l.getIdAutor(), pos);
+                indiceBPlus.inserir(l.getTitulo(), pos);
+                if (ativo) {
+                Livro li = new Livro();
+                li.fromByteArray(dados);
+
+                hashPK.inserir(li.getId(), pos);
+                hashAutorLivros.inserirLista(li.getIdAutor(), pos);
+                indiceBPlus.inserir(li.getTitulo(), pos);
+                
+            }
             }
         }
 
@@ -413,4 +452,30 @@ public class LivroDAO {
         hashPK.fechar();
         hashAutorLivros.fechar();
     }
+
+    //Consulta Ordenada via Árvore B+
+    
+    public List<Livro> listarLivrosOrdemAlfabetica() throws Exception {
+        List<Livro> livrosOrdenados = new ArrayList<>();
+        
+        // 1. Pede à Árvore B+ a lista de posições físicas na ordem correta
+        List<Long> posicoes = indiceBPlus.listarEmOrdemAlfabetica();
+        
+        // 2. Vai ao disco e lê apenas os livros nessas posições exatas
+        for (long pos : posicoes) {
+            arquivo.seek(pos);
+            boolean ativo = arquivo.readBoolean(); // Lê a lápide
+            int tamanho = arquivo.readInt();
+            byte[] bytes = new byte[tamanho];
+            arquivo.readFully(bytes);
+            
+            if (ativo) {
+                Livro livro = new Livro();
+                livro.fromByteArray(bytes);
+                livrosOrdenados.add(livro);
+            }
+        }
+        
+        return livrosOrdenados;
+    } 
 }
