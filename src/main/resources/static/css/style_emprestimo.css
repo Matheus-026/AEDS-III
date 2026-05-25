@@ -15,6 +15,146 @@ body::before {
 }
 
 /* =========================
+   ABAS N:N
+========================= */
+.abas {
+    display: flex;
+    gap: 4px;
+    margin-top: 24px;
+    margin-bottom: 0;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.aba-btn {
+    background: none;
+    border: none;
+    padding: 11px 22px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    border-radius: 8px 8px 0 0;
+    transition: color 0.2s, border-color 0.2s, background 0.15s;
+}
+
+.aba-btn:hover {
+    color: #444;
+    background: #f4f6f8;
+}
+
+.aba-btn.ativa {
+    color: #2e6da4;
+    border-bottom-color: #2e6da4;
+    font-weight: 600;
+    background: #f0f5fb;
+}
+
+/* =========================
+   PAINEL TODOS
+========================= */
+#painel-todos {
+    border-radius: 0 0 10px 10px;
+}
+
+/* =========================
+   PAINÉIS N:N (por usuário / por livro)
+========================= */
+.painel-nn {
+    background: #ffffff;
+    border: 1px solid #e8eef5;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    padding: 0;
+}
+
+.painel-nn .nn-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 15px;
+    background: #ffffff;
+    border-radius: 0;
+    border-bottom: 1px solid #eef3f2;
+    flex-wrap: wrap;
+}
+
+/* select do painel N:N — mesmo estilo do .filtros select */
+.painel-nn .nn-header select {
+    flex: 1;
+    min-width: 220px;
+    padding: 10px 40px 10px 20px;
+    border-radius: 999px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    background-color: #f9f9f9;
+    color: #333;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.painel-nn .nn-header select:focus {
+    border-color: #4a90e2;
+    box-shadow: 0 0 6px rgba(74,144,226,0.25);
+    background-color: #fff;
+}
+
+.painel-nn .nn-info {
+    font-weight: 600;
+    color: #1a3a5c;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+/* tabela dentro do painel N:N */
+.painel-nn table {
+    margin-top: 0;
+    border-radius: 0 0 10px 10px;
+    box-shadow: none;
+    border: none;
+}
+
+/* =========================
+   AVISO PAR ATIVO (modal)
+========================= */
+.aviso-ativo {
+    display: none;
+    align-items: flex-start;
+    gap: 8px;
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin: 10px 0 4px;
+    font-size: 13px;
+    color: #6d4c00;
+    line-height: 1.5;
+}
+
+/* =========================
+   CÉLULAS VAZIAS / ERRO
+========================= */
+.vazio {
+    text-align: center;
+    color: #aaa;
+    padding: 28px 0 !important;
+    font-size: 14px;
+}
+
+.vazio.erro {
+    color: #c0392b;
+}
+
+/* =========================
    BARRA DE FILTROS
 ========================= */
 .filtros {
@@ -52,11 +192,8 @@ body::before {
     background: #fff;
 }
 
-.filtros input::placeholder {
-    color: #aaa;
-}
+.filtros input::placeholder { color: #aaa; }
 
-/* select de status — oval, seta customizada */
 .filtros select {
     padding: 10px 40px 10px 18px;
     border-radius: 999px;
@@ -134,9 +271,7 @@ body::before {
     transition: background 0.2s;
 }
 
-.item-sugestao:hover {
-    background-color: #f0f4ff;
-}
+.item-sugestao:hover { background-color: #f0f4ff; }
 
 /* =========================
    MODAL — CAMPOS OVAL
@@ -226,9 +361,7 @@ body::before {
     color: var(--primary-color);
 }
 
-.modal-actions button[type="button"]:hover {
-    background: #c7c7c7;
-}
+.modal-actions button[type="button"]:hover { background: #c7c7c7; }
 
 .modal-actions button[type="submit"],
 #btn-submit {
@@ -237,6 +370,11 @@ body::before {
 }
 
 .modal-actions button[type="submit"]:hover,
-#btn-submit:hover {
-    background: #e6952f;
-}
+#btn-submit:hover { background: #e6952f; }
+
+/* botão desabilitado quando par ativo está bloqueado */
+#btn-submit:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+} 

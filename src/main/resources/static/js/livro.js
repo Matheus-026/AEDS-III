@@ -525,36 +525,32 @@ document.getElementById("buscar").addEventListener("input", async (e) => {
 // ==========================================
 document.getElementById('ordenar').addEventListener('change', async function() {
     
-    // Verifica se a opção escolhida foi o Preço
+    // 1.Ordenação Externa (Preço)
     if (this.value === 'preco') {
-        
-        // Bloqueia o select para o utilizador não clicar várias vezes enquanto ordena
         this.disabled = true; 
-        
-        // Se já tiver uma função de Toast, use-a. Se não, um alert avisa o utilizador.
         alert("Iniciando a Ordenação Externa em disco... Aguarde.");
-
         try {
-            // Dispara a requisição POST para a rota que criamos no Controller
-            const response = await fetch('http://localhost:8080/api/livros/ordenar', {
-                method: 'POST'
-            });
-
-            if (response.ok) {
-                alert("Sucesso! O ficheiro livros.dat foi ordenado pelo Preço.");
+            const response = await fetch('http://localhost:8080/api/livros/ordenar', { method: 'POST' });
+            if (response.ok) window.location.reload(); 
+        } catch (error) { console.error(error); }
+    } 
+    
+    // 2.Consulta Ordenada via Árvore B+ (Título)
+    else if (this.value === 'titulo-bplus') {
+        try {
+            const response = await fetch('http://localhost:8080/api/livros/ordenados-bplus');
+            
+           if (response.ok) {
+                const livrosOrdenados = await response.json();
                 
-                // Recarrega a página para o LivroDAO ler o ficheiro na nova ordem
-                window.location.reload(); 
-            } else {
-                alert("Erro no servidor ao tentar ordenar os livros.");
-                this.disabled = false;
-                this.value = ""; // Reseta o select
+                console.log("Livros recebidos da B+:", livrosOrdenados);
+                
+               renderTabela(livrosOrdenados);
+                
+                alert("Consulta Ordenada concluída com sucesso usando Árvore B+!");
             }
         } catch (error) {
-            console.error("Erro na conexão:", error);
-            alert("Servidor offline ou erro de rede.");
-            this.disabled = false;
-            this.value = "";
+            console.error("Erro ao buscar livros ordenados:", error);
         }
     }
 });
