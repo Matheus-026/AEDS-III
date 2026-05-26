@@ -390,42 +390,49 @@ public class LivroDAO {
 
     
     // RECONSTRUIR ÍNDICES
+ // RECONSTRUIR ÍNDICES
     public void reconstruirIndices() throws IOException {
 
+        // Limpa os arquivos de hash
         zerarArquivo("data/diretorios/livros_dir.hash");
         zerarArquivo("data/buckets/livros_bucket.hash");
         zerarArquivo("data/diretorios/autorlivros_dir.hash");
         zerarArquivo("data/buckets/autorlivros_bucket.hash");
 
-        hashPK          = new HashExtensivel("livros");
+        // Recria os índices
+        hashPK = new HashExtensivel("livros");
         hashAutorLivros = new HashExtensivel("autorlivros");
 
+        // IMPORTANTE:
+        // recria também a árvore B+ zerada
+        this.indiceBPlus = new ArvoreBPlus(5, "livros_bplus");
+
+        // Vai para o início dos registros
         arquivo.seek(8);
 
         while (arquivo.getFilePointer() < arquivo.length()) {
 
-            long    pos    = arquivo.getFilePointer();
-            boolean ativo  = arquivo.readBoolean();
-            int     tam    = arquivo.readInt();
-            byte[]  dados  = new byte[tam];
+            long pos = arquivo.getFilePointer();
+
+            boolean ativo = arquivo.readBoolean();
+            int tam = arquivo.readInt();
+
+            byte[] dados = new byte[tam];
             arquivo.readFully(dados);
 
             if (ativo) {
+
                 Livro l = new Livro();
                 l.fromByteArray(dados);
 
+                // Reconstrói hash primário
                 hashPK.inserir(l.getId(), pos);
-                hashAutorLivros.inserirLista(l.getIdAutor(), pos);
-                indiceBPlus.inserir(l.getTitulo(), pos);
-                if (ativo) {
-                Livro li = new Livro();
-                li.fromByteArray(dados);
 
-                hashPK.inserir(li.getId(), pos);
-                hashAutorLivros.inserirLista(li.getIdAutor(), pos);
-                indiceBPlus.inserir(li.getTitulo(), pos);
-                
-            }
+                // Reconstrói hash secundário
+                hashAutorLivros.inserirLista(l.getIdAutor(), pos);
+
+                // Reconstrói árvore B+
+                indiceBPlus.inserir(l.getTitulo(), pos);
             }
         }
 
