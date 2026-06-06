@@ -1,6 +1,6 @@
 # BiblioTech – Sistema de Gerenciamento de Biblioteca
 
-Sistema desenvolvido para a disciplina de **AEDS III** com foco na construção de um motor de banco de dados próprio, utilizando persistência em arquivos binários e técnicas avançadas de indexação.
+Sistema desenvolvido para a disciplina de **AEDS III** com foco na construção de um motor de banco de dados próprio, utilizando persistência em arquivos binários, Hash Extensível, Árvore B+, relacionamentos 1:N e N:N, ordenação externa e compressão de dados utilizando Huffman e LZW.
 
 ---
 
@@ -20,7 +20,11 @@ Sistema desenvolvido para a disciplina de **AEDS III** com foco na construção 
 - Java 17+
 - Spring Boot 3 (Spring Web / Tomcat embutido)
 - HTML + CSS + JavaScript (front-end)
-- Arquivos binários `.dat` e `.hash` (persistência própria, sem banco de dados externo)
+- Arquivos binários `.dat` e `.hash` (persistência própria, sem banco de dados 
+- Árvore B+
+- Compressão Huffman
+- Compressão LZW
+externo)
 
 ---
 
@@ -46,6 +50,11 @@ bibliotech/
 ├── src/
 │   └── main/
 │       ├── java/com/bibliotech/
+│       │   ├── compression/
+│       │   │   ├── LZW.java
+│       │   │   ├── Huffman.java
+│       │   │   ├── HuffmanNode.java
+│       │   │   └── BackupManager.java
 │       │   ├── BibliotechApplication.java   ← ponto de entrada Spring Boot
 │       │   ├── controller/                  ← endpoints REST
 │       │   ├── dao/                         ← persistência em arquivos binários
@@ -58,13 +67,22 @@ bibliotech/
 │       └── resources/
 │           ├── application.properties
 │           └── static/                      ← front-end (HTML/CSS/JS)
-├── data/                                    ← criado automaticamente na primeira execução
+├── data/                                    ← criado automaticamente na primeira 
+backup/
+├── backup_completo.dat
+├── backup_completo.lzw
+└── backup_completo.huff
+execução
 │   ├── autores.dat
 │   ├── livros.dat
 │   ├── usuarios.dat
 │   ├── emprestimos.dat
 │   ├── diretorios/   ← arquivos de diretório da Hash Extensível
 │   └── buckets/      ← arquivos de bucket da Hash Extensível
+├── temp1.dat
+├── temp2.dat
+├── temp3.dat
+├── temp4.dat
 ├── pom.xml
 └── README.md
 ```
@@ -209,6 +227,45 @@ Se os arquivos `.hash` estiverem ausentes ou incompatíveis (ex: após alterar `
 - Senhas nunca são expostas nos endpoints de listagem (`setSenha(null)` antes de serializar)
 
 ---
+
+## Compressão
+
+O sistema gera automaticamente um backup único contendo todos os arquivos de dados utilizados pela aplicação.
+
+Arquivos incluídos:
+
+- autores.dat
+- livros.dat
+- usuarios.dat
+- emprestimos.dat
+
+Os arquivos são reunidos em:
+
+backup_completo.dat
+
+Sobre este arquivo são aplicados dois algoritmos de compressão:
+
+- LZW
+- Huffman
+
+Arquivos gerados:
+
+backup_completo.lzw
+backup_completo.huff
+
+### Resultados obtidos:
+
+LZW
+- Arquivo original: 6012 bytes
+- Arquivo compactado: 5372 bytes
+- Taxa de compressão: 10,65%
+
+Huffman
+- Arquivo original: 6012 bytes
+- Arquivo compactado: 3959 bytes
+- Taxa de compressão: 34,15%
+
+Nos testes realizados, o algoritmo Huffman apresentou melhor desempenho para os dados do sistema.
 
 ## Licença
 
