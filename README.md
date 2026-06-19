@@ -219,6 +219,80 @@ buscarLivrosPorAutor(idAutor):
 Se os arquivos `.hash` estiverem ausentes ou incompatíveis (ex: após alterar `TAM_BUCKET`), os índices são reconstruídos automaticamente na inicialização percorrendo o `.dat` do início ao fim.
 
 ---
+### Pesquisa por Padrão (KMP) — `/livros`
+ 
+| Método | Rota | Descrição |
+|---|---|---|
+| `GET` | `/livros/busca-padrao?padrao=...&algoritmo=KMP&campo=titulo` | Busca livros cujo título, autor ou gênero contenham o padrão informado |
+ 
+---
+ 
+## Casamento de Padrões — KMP (Knuth-Morris-Pratt)
+ 
+### Campo escolhido
+ 
+A busca por padrão foi aplicada sobre os campos textuais do livro: **título**, **autor** e **gênero**, com a opção de busca combinada em todos eles (`campo=todos`). Esses são os únicos campos de texto livre do modelo `Livro` — preço e data de publicação são valores numéricos/data, sem sentido para uma busca por substring.
+ 
+### Onde está o código
+ 
+```
+src/main/java/com/bibliotech/util/KMP.java
+src/main/java/com/bibliotech/controller/PesquisaController.java
+```
+ 
+### Como funciona
+ 
+1. **Pré-processamento (array LPS):** antes de procurar no texto, o algoritmo monta um array auxiliar (`lps[]`) a partir do próprio padrão, indicando o maior prefixo que também é sufixo em cada posição.
+2. **Busca:** o texto é percorrido uma única vez. Ao encontrar uma divergência, o índice do padrão recua usando o `lps[]` (sem retroceder no texto), evitando comparações repetidas.
+3. **Complexidade:** O(n + m), onde `n` é o tamanho do texto e `m` o tamanho do padrão.
+4. A busca é *case-insensitive* (texto e padrão são convertidos para minúsculas antes da comparação).
+### Como compilar
+ 
+O `KMP.java` é compilado automaticamente junto com o restante do projeto pelo Maven — não exige nenhum passo extra:
+ 
+```bash
+# na raiz do projeto
+mvn clean compile
+```
+ 
+Ou, se preferir compilar manualmente apenas essa classe (fora do Maven), a partir da raiz do projeto:
+ 
+```bash
+javac -d target/classes src/main/java/com/bibliotech/util/KMP.java
+```
+ 
+### Como executar e testar
+ 
+1. Suba a aplicação normalmente:
+```bash
+   mvn spring-boot:run
+```
+   ou execute `BibliotechApplication.java` pela IDE.
+ 
+2. Acesse a tela **Pesquisa Avançada** em `http://localhost:8080/pesquisa`, preencha o campo "Padrão de busca", escolha o algoritmo (`KMP`) e o campo (`Título`, `Autor`, `Gênero` ou `Todos`), e clique em **Buscar por Padrão**.
+3. Ou teste diretamente via terminal, sem usar a interface:
+```bash
+   curl "http://localhost:8080/livros/busca-padrao?padrao=anel&algoritmo=KMP&campo=titulo"
+```
+ 
+   Resposta esperada (exemplo):
+```json
+   {
+     "padrao": "anel",
+     "algoritmo": "KMP",
+     "campo": "titulo",
+     "totalResultados": 1,
+     "resultados": [
+       {
+         "titulo": "O Senhor dos Anéis",
+         "ocorrenciasTitulo": [13],
+         "totalOcorrencias": 1
+       }
+     ]
+   }
+```
+ 
+---
 
 ## Segurança
 
