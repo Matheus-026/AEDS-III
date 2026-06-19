@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ─── SUBMIT (BUSCA REAL) ─────────────────────────────────────────────────
+    // ─── SUBMIT (BUSCA REAL - filtros normais) ──────────────────────────────
     formPesquisa.addEventListener('submit', function(event) {
         event.preventDefault();
 
@@ -59,26 +59,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.log("Dados enviados do formulário:", dados);
 
-        // 1. Monta a URL inteligente
         const url = new URL('http://localhost:8080/livros/busca');
-        
+
         // Livros
         if (dados.titulo) url.searchParams.append('titulo', dados.titulo);
         if (dados.genero) url.searchParams.append('genero', dados.genero);
         if (dados.preco) {
-            url.searchParams.append('min', -1); 
+            url.searchParams.append('min', -1);
             url.searchParams.append('max', dados.preco);
         }
-        
+
         // Autores
         if (dados.nomeAutor) url.searchParams.append('autorNome', dados.nomeAutor);
         if (dados.telefoneAutor) url.searchParams.append('autorTelefone', dados.telefoneAutor);
-        
+
         // Usuários
         if (dados.nomeUsuario) url.searchParams.append('usuarioNome', dados.nomeUsuario);
         if (dados.emailUsuario) url.searchParams.append('usuarioEmail', dados.emailUsuario);
         if (dados.statusUsuario) url.searchParams.append('usuarioStatus', dados.statusUsuario);
-        
+
         // Empréstimos
         if (dados.livroEmprestado) url.searchParams.append('emprestimoLivro', dados.livroEmprestado);
         if (dados.usuarioEmprestimo) url.searchParams.append('emprestimoUsuario', dados.usuarioEmprestimo);
@@ -87,7 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.log("URL gerada para o fetch:", url.toString());
 
-        // 2. Faz a requisição para o backend
         fetch(url.toString())
             .then(response => response.json())
             .then(data => {
@@ -100,12 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let html = "";
 
-                // 3. Monta os cards com os novos campos (Autor e Status)
                 data.forEach(livro => {
                     const generos = livro.generos ? livro.generos.join(", ") : "Sem gênero";
                     const statusEmprestimo = livro.usuarioEmprestimo ? `Emprestado para ${livro.usuarioEmprestimo}` : "Disponível";
 
-                    // Note que usei a classe 'resultado-item' para pegar o estilo de caixinha do CSS
                     html += `
                         <div class="resultado-item">
                             <strong>${livro.titulo}</strong>
@@ -124,28 +120,95 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     });
 
-    // ─── Monta URL para o backend com TODOS os filtros ─────────────────────
-        const url = new URL('http://localhost:8080/livros/busca');
-        
-        // Adiciona apenas os campos que foram preenchidos (ignora os vazios)
-        if (dados.titulo) url.searchParams.append('titulo', dados.titulo);
-        if (dados.genero) url.searchParams.append('genero', dados.genero);
-        if (dados.preco) {
-            url.searchParams.append('min', -1); // Supondo que você quer manter o min fixo como no seu código original
-            url.searchParams.append('max', dados.preco);
-        }
-    
-        if (dados.nomeAutor) url.searchParams.append('autorNome', dados.nomeAutor);
-        if (dados.telefoneAutor) url.searchParams.append('autorTelefone', dados.telefoneAutor);
-        
-        if (dados.nomeUsuario) url.searchParams.append('usuarioNome', dados.nomeUsuario);
-        if (dados.emailUsuario) url.searchParams.append('usuarioEmail', dados.emailUsuario);
-        
-        if (dados.livroEmprestado) url.searchParams.append('emprestimoLivro', dados.livroEmprestado);
-        if (dados.usuarioEmprestimo) url.searchParams.append('emprestimoUsuario', dados.usuarioEmprestimo);
-        if (dados.dataInicial) url.searchParams.append('dataInicial', dados.dataInicial);
-        if (dados.dataFinal) url.searchParams.append('dataFinal', dados.dataFinal);
+    // ═══════════════════════════════════════════════════════════════════════
+    // SEÇÃO: BUSCA POR PADRÃO (KMP / Boyer-Moore)
+    // Campos reais do modelo: titulo, autor, genero (não há "resumo").
+    // ═══════════════════════════════════════════════════════════════════════
 
-        fetch(url.toString())
+    const btnBuscaPadrao = document.getElementById('btn-buscar-padrao');
 
+    if (btnBuscaPadrao) {
+        btnBuscaPadrao.addEventListener('click', async () => {
+
+            const padrao    = document.getElementById('input-padrao').value.trim();
+            const algoritmo = document.getElementById('sel-algoritmo').value;
+            const campo     = document.getElementById('sel-campo-padrao').value;
+
+            if (!padrao) {
+                divResultados.innerHTML = `<p class="erro-busca">Digite um padrão para buscar.</p>`;
+                return;
+            }
+
+            divResultados.innerHTML = `<p>Buscando...</p>`;
+
+            const url = new URL('http://localhost:8080/livros/busca-padrao');
+            url.searchParams.append('padrao', padrao);
+            url.searchParams.append('algoritmo', algoritmo);
+            url.searchParams.append('campo', campo);
+
+            try {
+                const res  = await fetch(url.toString());
+                const data = await res.json();
+
+                if (!res.ok) {
+                    divResultados.innerHTML = `<p class="erro-busca">${data.erro || 'Erro na busca.'}</p>`;
+                    return;
+                }
+
+                if (!data.resultados || data.resultados.length === 0) {
+                    divResultados.innerHTML = `
+                        <p>Nenhum resultado encontrado para "<strong>${escaparTexto(padrao)}</strong>"
+                        usando ${data.algoritmo}.</p>`;
+                    return;
+                }
+
+                const infoTopo = `
+                    <div class="info-busca-padrao">
+                        <strong>${data.totalResultados}</strong> resultado(s) para
+                        "<strong>${escaparTexto(padrao)}</strong>"
+                        <span class="badge-algoritmo">${data.algoritmo}</span>
+                    </div>`;
+
+                const cards = data.resultados.map(livro => {
+                    const generos  = livro.generos ? livro.generos.join(", ") : "Sem gênero";
+                    const tituloHL = destacarPadrao(livro.titulo || "", padrao);
+                    const autorHL  = destacarPadrao(livro.nomeAutor || "", padrao);
+                    const generoHL = destacarPadrao(generos, padrao);
+
+                    return `
+                        <div class="resultado-item">
+                            <strong>${tituloHL}</strong>
+                            <span class="ocorrencias-tag">${livro.totalOcorrencias} ocorrência(s)</span><br>
+                            <strong>Autor:</strong> ${autorHL}<br>
+                            <strong>Preço:</strong> R$ ${livro.preco}<br>
+                            <strong>Gêneros:</strong> ${generoHL}<br>
+                            <strong>Publicação:</strong> ${escaparTexto(livro.dataPublicacao || "Não informada")}
+                        </div>`;
+                }).join("");
+
+                divResultados.innerHTML = infoTopo + cards;
+
+            } catch (err) {
+                console.error("Erro na busca por padrão:", err);
+                divResultados.innerHTML = `<p class="erro-busca">Erro ao conectar ao servidor.</p>`;
+            }
+        });
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function escaparTexto(str) {
+        if (!str) return "";
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+    }
+
+    function destacarPadrao(texto, padrao) {
+        if (!texto || !padrao) return escaparTexto(texto);
+        const textoEscapado  = escaparTexto(texto);
+        const padraoEscapado = escaparTexto(padrao).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const re = new RegExp(padraoEscapado, "gi");
+        return textoEscapado.replace(re, m => `<mark>${m}</mark>`);
+    }
 });
