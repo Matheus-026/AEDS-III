@@ -296,9 +296,60 @@ javac -d target/classes src/main/java/com/bibliotech/util/KMP.java
 
 ## Segurança
 
-- Senhas armazenadas com **criptografia XOR** 
-- O DAO sempre grava senha criptografada e retorna senha descriptografada
-- Senhas nunca são expostas nos endpoints de listagem (`setSenha(null)` antes de serializar)
+### Armazenamento de Senhas
+
+As senhas dos usuários são protegidas utilizando uma combinação de **criptografia simétrica baseada em XOR** e **codificação Base64**.
+
+O processo funciona da seguinte forma:
+
+1. A senha informada pelo usuário é convertida para bytes UTF-8;
+2. Cada byte é combinado, por meio da operação **XOR**, com uma chave fixa (`"pucminas"`);
+3. O resultado é codificado em **Base64**, garantindo que os dados possam ser armazenados com segurança em arquivos binários utilizando `writeUTF()`.
+
+Fluxo de armazenamento:
+
+```text
+Senha em texto puro → XOR → Base64 → arquivo .dat
+````
+
+Durante a autenticação, a senha fornecida pelo usuário é novamente processada com o mesmo algoritmo e comparada ao valor armazenado.
+
+```text
+Senha digitada → XOR → Base64 → comparação
+```
+
+Como a operação XOR é reversível, o sistema pode recuperar a senha original quando necessário:
+
+```text
+(A XOR B) XOR B = A
+```
+
+### Implementação
+
+A lógica de proteção das senhas está centralizada na classe:
+
+```text
+src/main/java/com/bibliotech/dao/UsuarioDAO.java
+```
+
+Métodos responsáveis:
+
+* `criptografar(String senha)`
+* `descriptografar(String senhaCriptografada)`
+
+### Limitações
+
+> **Importante:** o uso de XOR com chave fixa não é considerado seguro para aplicações em produção.
+
+Essa abordagem foi adotada exclusivamente para fins acadêmicos, com o objetivo de demonstrar conceitos de transformação de dados e persistência em arquivos binários.
+
+Em sistemas reais, recomenda-se utilizar algoritmos específicos para armazenamento de senhas, como:
+
+* BCrypt
+* Argon2
+* PBKDF2
+
+Esses algoritmos utilizam técnicas como *salt*, múltiplas iterações e custo computacional ajustável, impedindo a recuperação da senha original.
 
 ---
 
