@@ -291,6 +291,17 @@ javac -d target/classes src/main/java/com/bibliotech/util/KMP.java
      ]
    }
 ```
+## Casamento de Padrões — Boyer-Moore (Heurística do Caractere Ruim)
+
+### Campo escolhido
+
+A busca por padrão foi aplicada sobre os campos textuais do livro: **título**, **autor** e **gênero**, com a opção de busca combinada em todos eles (`campo=todos`). A escolha é a mesma utilizada no KMP, garantindo paridade de funcionalidades e oferecendo a busca avançada por substrings em qualquer campo não-numérico do modelo.
+
+### Onde está o código
+
+```text
+src/main/java/com/bibliotech/util/BoyerMoore.java
+src/main/java/com/bibliotech/controller/PesquisaController.java
  
 ---
 
