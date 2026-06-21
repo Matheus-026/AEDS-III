@@ -26,10 +26,7 @@ public class PesquisaController {
         autorDAO = new AutorDAO();
     }
 
-    // =========================================================================
-    // BUSCA AVANÇADA EXISTENTE (mantida sem alterações)
-    // GET /livros/busca
-    // =========================================================================
+    // BUSCA AVANÇADA 
     @GetMapping("/busca")
     public List<Livro> busca(
              @RequestParam(name = "titulo", required = false) String titulo,
@@ -52,15 +49,11 @@ public class PesquisaController {
                                   emprestimoLivro, emprestimoUsuario, dataInicial, dataFinal);
     }
 
-    // =========================================================================
-    // BUSCA POR PADRÃO — KMP (e futuramente Boyer-Moore)
-    // GET /livros/busca-padrao?padrao=texto&algoritmo=KMP&campo=titulo
-    //
-    // Campos suportados: titulo, autor, genero, todos.
-    // Justificativa: são os únicos campos textuais do modelo de Livro;
-    // preço e data de publicação são valores numéricos/data e não fazem
-    // sentido para busca por substring.
-    // =========================================================================
+
+    // BUSCA POR PADRÃO — KMP e Boyer-Moore
+    // Campos: titulo, autor, genero, todos.
+   
+    
     @GetMapping("/busca-padrao")
     public ResponseEntity<?> buscaPorPadrao(
             @RequestParam(name = "padrao") String padrao,
