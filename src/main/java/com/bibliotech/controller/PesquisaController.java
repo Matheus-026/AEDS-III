@@ -11,6 +11,7 @@ import com.bibliotech.dao.AutorDAO;
 import com.bibliotech.model.Livro;
 import com.bibliotech.model.Autor;
 import com.bibliotech.util.KMP;
+import com.bibliotech.util.BoyerMoore;
 
 @RestController
 @RequestMapping("/livros")
@@ -71,10 +72,10 @@ public class PesquisaController {
                 .body(Map.of("erro", "O parâmetro 'padrao' é obrigatório."));
         }
 
-        if (!"KMP".equalsIgnoreCase(algoritmo)) {
+        if (!"KMP".equalsIgnoreCase(algoritmo) && !"BM".equalsIgnoreCase(algoritmo)) {
             return ResponseEntity.badRequest()
                 .body(Map.of("erro",
-                    "Algoritmo '" + algoritmo + "' ainda não implementado. Use 'KMP'."));
+                    "Algoritmo '" + algoritmo + "' inválido. Use 'KMP' ou 'BM'."));
         }
 
         boolean buscaTitulo = campo.equals("titulo") || campo.equals("todos");
@@ -99,13 +100,16 @@ public class PesquisaController {
                 List<Integer> ocorrenciasGenero = new ArrayList<>();
 
                 if (buscaTitulo && l.getTitulo() != null) {
-                    ocorrenciasTitulo = KMP.buscar(l.getTitulo(), padrao);
+                    if ("KMP".equalsIgnoreCase(algoritmo)) ocorrenciasTitulo = KMP.buscar(l.getTitulo(), padrao);
+                    else ocorrenciasTitulo = BoyerMoore.buscar(l.getTitulo(), padrao);
                 }
                 if (buscaAutor && !nomeAutor.isEmpty()) {
-                    ocorrenciasAutor = KMP.buscar(nomeAutor, padrao);
+                    if ("KMP".equalsIgnoreCase(algoritmo)) ocorrenciasAutor = KMP.buscar(nomeAutor, padrao);
+                    else ocorrenciasAutor = BoyerMoore.buscar(nomeAutor, padrao);
                 }
                 if (buscaGenero && !generosTexto.isEmpty()) {
-                    ocorrenciasGenero = KMP.buscar(generosTexto, padrao);
+                    if ("KMP".equalsIgnoreCase(algoritmo)) ocorrenciasGenero = KMP.buscar(generosTexto, padrao);
+                    else ocorrenciasGenero = BoyerMoore.buscar(generosTexto, padrao);
                 }
 
                 int totalOcorrencias = ocorrenciasTitulo.size()
