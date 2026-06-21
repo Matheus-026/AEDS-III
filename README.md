@@ -302,7 +302,61 @@ A busca por padrão foi aplicada sobre os campos textuais do livro: **título**,
 ```text
 src/main/java/com/bibliotech/util/BoyerMoore.java
 src/main/java/com/bibliotech/controller/PesquisaController.java
- 
+```
+
+### Como funciona
+
+1. **Pré-processamento (Tabela Bad Character):** Antes da busca, o algoritmo constrói um dicionário (`HashMap`) mapeando cada caractere do padrão para a sua posição mais à direita. Essa tabela determina o tamanho do "salto" que o algoritmo dará quando encontrar uma divergência.
+2. **Busca da Direita para a Esquerda:** O padrão é alinhado ao texto, mas as comparações dos caracteres ocorrem de trás para frente (da direita para a esquerda).
+3. **Saltos Inteligentes (Mismatch):** Ao encontrar um caractere divergente no texto (*bad character*), o algoritmo consulta a tabela. Se o caractere existir no padrão, ele desliza o bloco inteiro até que as ocorrências se alinhem. Se não existir, ele "salta" o padrão inteiro além desse caractere, evitando comparações desnecessárias.
+4. A busca também é *case-insensitive* (texto e padrão são convertidos para minúsculas antes da comparação), mantendo a compatibilidade com a implementação do KMP.
+
+### Como compilar
+
+O `BoyerMoore.java` é compilado automaticamente junto com o restante do projeto pelo Maven — não exige nenhum passo extra:
+
+```bash
+# na raiz do projeto
+mvn clean compile
+```
+
+Ou, se preferir compilar manualmente apenas essa classe (fora do Maven), a partir da raiz do projeto:
+
+```bash
+javac -d target/classes src/main/java/com/bibliotech/util/BoyerMoore.java
+```
+
+### Como executar e testar
+
+1. Suba a aplicação normalmente:
+```bash
+   mvn spring-boot:run
+```
+   ou execute `BibliotechApplication.java` pela IDE.
+
+2. Acesse a tela **Pesquisa Avançada** em `http://localhost:8080/pesquisa`, preencha o campo "Padrão de busca", escolha o algoritmo (`Boyer–Moore`) e o campo (`Título`, `Autor`, `Gênero` ou `Todos`), e clique em **Buscar por Padrão**.
+
+3. Ou teste diretamente via terminal, sem usar a interface:
+```bash
+   curl "http://localhost:8080/livros/busca-padrao?padrao=anel&algoritmo=BM&campo=titulo"
+```
+
+   Resposta esperada (exemplo):
+```json
+   {
+     "padrao": "anel",
+     "algoritmo": "BM",
+     "campo": "titulo",
+     "totalResultados": 1,
+     "resultados": [
+       {
+         "titulo": "O Senhor dos Anéis",
+         "ocorrenciasTitulo": [13],
+         "totalOcorrencias": 1
+       }
+     ]
+   }
+```
 ---
 
 ## Segurança
